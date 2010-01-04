@@ -35,7 +35,10 @@ class CreamXMLBackend(dict, Backend):
             return slugify(s) + '.xml'
 
         profile_list = self.backref().profiles
-        selected_profile = self.backref().active_profile
+        selected_profile = profile_list.active
+
+        for file in os.listdir(self.folder):
+            os.remove(os.path.join(self.folder, file))
 
         for profile in self.backref().profiles:
             if not profile.is_editable: continue
@@ -52,7 +55,7 @@ class CreamXMLBackend(dict, Backend):
             return self.__getitem__(item)
         except KeyError:
             raise MissingOption(item)
-    set_option = lambda self, item, value: self.__setitem__(item, value)
+    set_option = dict.__setitem__
 
     options = property(lambda self:self.keys())
     tree = property(lambda self:self)
