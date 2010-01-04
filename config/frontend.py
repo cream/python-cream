@@ -56,7 +56,7 @@ class CreamFrontend(GtkConfigurationWindow, GtkBuilderInterface):
         iter = self.profiles_storage.get_iter_from_string(str(position))
         # huaa?
         self.profiles_storage.remove(iter)
-        self.profile_selector.set_active(position)
+        self.profile_selector.set_active(position-1)
 
 
     # CALLBACKS
