@@ -1,32 +1,53 @@
+# TODO: Rewrite this.
+
 from gpyconf import Configuration as _Configuration
 
 from .backend import CreamXMLBackend
 from .frontend import CreamFrontend
 from cream.util import flatten
 
+class ProfileNotEditable(Exception):
+    pass
 
 class ConfigurationProfile(object):
     """ A configuration profile. Holds name and assigned values. """
-    _values = None
     is_editable = True
 
     def __init__(self, name, editable=True, **values):
         self.name = name
         self.default_values = values
         self.is_editable = editable
+        self._values = values
 
     @classmethod
-    def fromdict(cls, dct):
-        return cls(dct.pop('name'), dct.pop('editable', True),
-                   **dct.get('values', dct))
+    def fromdict(cls, dct, name=None):
+        if name:
+            return cls(name, **dct)
+        else:
+            return cls(dct.pop('name'), dct.pop('editable', True),
+                       **dct.get('values', ()))
 
     @property
     def values(self):
-        return self._values or self.default_values
+        return self._values
 
+    # TODO: Very repetitive
     @values.setter
-    def values(self, values):
-        self._values = values
+    def values(self, value):
+        if not self.is_editable:
+            raise ProfileNotEditable(self)
+        else:
+            self._values = value
+
+    def update(self, iterable):
+        if not self.is_editable:
+            raise ProfileNotEditable(self)
+        self.values.update(iterable)
+
+    def set(self, name, value):
+        if not self.is_editable:
+            raise ProfileNotEditable(self)
+        self.values[name] = value
 
     def __repr__(self):
         return "<Profile '%s'%s>" % (self.name,
@@ -44,14 +65,21 @@ class ProfileExistsError(Exception):
 
 class ProfileList(list):
     """ List of profiles """
-    def append(self, profile, overwrite=False):
-        self.insert(len(self), profile, overwrite=overwrite)
+    default = None
+    active = None
+    active_index = 0
 
-    def insert(self, index, profile, overwrite=False):
-        """
-        Insert `profile` at `index` if `profile` not in `self` and not `overwrite`.
-        Else, raise `ProfileExistsError`.
-        """
+    def __init__(self, default_profile):
+        list.__init__(self)
+        list.append(self, default_profile)
+        self.default = default_profile
+
+    def insert(self, index, profile, overwrite=False, set_active=False):
+        assert index
+
+        if not isinstance(profile, ConfigurationProfile):
+            profile = ConfigurationProfile.fromdict(profile)
+
         old_profile = self.by_name(profile.name)
         if old_profile is not None:
             if not overwrite:
@@ -60,6 +88,13 @@ class ProfileList(list):
                 old_profile.values = profile.values
         else:
             list.insert(self, index, profile)
+
+        if set_active:
+            self.active_index = index
+
+    def append(self, *args, **kwargs):
+        self.insert(len(self), *args, **kwargs)
+    add = append
 
     def by_name(self, name):
         """
@@ -70,6 +105,16 @@ class ProfileList(list):
             if profile.name == name:
                 return profile
 
+    def _use(self, profile, fields):
+        if isinstance(profile, int):
+            self.active = self[profile]
+            self.active_index = profile
+        else:
+            self.active = profile
+            self.active_index = self.index(profile)
+        for name, instance in fields.iteritems():
+            instance.value = self.active.values[name]
+
 
 class Configuration(_Configuration):
     """
@@ -77,105 +122,82 @@ class Configuration(_Configuration):
     """
     frontend = CreamFrontend
     backend = CreamXMLBackend
-
-    active_profile = None
-    active_profile_index = 0
     profiles = ()
+    _ingore_frontend = False
 
     def __init__(self, **kwargs):
         predefined_profiles = self.profiles
-        self.profiles = ProfileList()
-
-        default_profile = self.make_default_profile()
-        self.active_profile = default_profile
-        # activate default profile for now (avoiding GTK+ warnings)
+        self.profiles = ProfileList(DefaultProfile(**self.fields.name_value_dict))
+        self.use_profile(0)
 
         _Configuration.__init__(self, **kwargs)
 
         backend = self.backend_instance
         # add profiles loaded by the backend
         for profile in flatten((backend.profiles, predefined_profiles)):
-            if isinstance(profile, dict):
-                profile = ConfigurationProfile.fromdict(profile)
-            self.profiles.append(profile, overwrite=True)
-
-        self.profiles.insert(0, default_profile)
-        # add the default profile
-        # (added not until here to make sure it's ALWAYS the first item)
+            self.profiles.insert(profile.pop('position'), profile,
+                    overwrite=True, set_active=profile.pop('selected', False))
 
         #for field_name, value in backend.static_options.iteritems():
         #    setattr(self, field_name, value)
 
         if len(self.profiles) > 1:
-            self.on_profile_changed(self, None, backend.selected_profile)
+            self.window.set_active_profile_index(self.profiles.active_index)
+
+    def __setattr__(self, attr, value):
+        new_value = super(Configuration, self).__setattr__(attr, value)
+        if new_value is not None:
+            self.profiles.active.set(attr, new_value)
+
+    def __getattr__(self, name):
+        if name in ('frontend', 'window'):
+            # window as alias
+            return self.get_frontend()
+        try:
+            return self.profiles.active.values[name]
+        except KeyError:
+            raise AttributeError("No such attribute '%s'" % name)
+
+    def use_profile(self, profile):
+        self.profiles._use(profile, self.fields)
 
 
-    def make_default_profile(self):
-        return DefaultProfile(**self.fields.name_value_dict)
-
-
+    # FRONTEND:
     def _init_frontend(self, fields):
         _Configuration._init_frontend(self, fields)
 
         self.window.add_profiles(self.profiles)
 
-        self.window.connect('profile-changed', self.on_profile_changed)
-        self.window.connect('add-profile', self.on_add_profile)
-        self.window.connect('remove-profile', self.on_remove_profile)
+        self.window.connect('profile-changed', self.frontend_profile_changed)
+        self.window.connect('add-profile', self.frontend_add_profile)
+        self.window.connect('remove-profile', self.frontend_remove_profile)
 
-        self.window.set_active_profile_index(self.active_profile_index)
+        self.window.set_active_profile_index(self.profiles.active_index)
 
-
-    def on_field_value_changed(self, sender, field, value):
-        """ User changed a value of some field """
-        if isinstance(field, basestring):
-            field = self.fields[field]
-        if self.active_profile.is_editable:
-            self.active_profile.values[field.field_var] = value
-
-        _Configuration.on_field_value_changed(self, sender, field, value)
+    def frontend_field_value_changed(self, *args):
+        if not self._ignore_frontend:
+            super(Configuration, self).frontend_field_value_changed(*args)
 
 
-    def on_profile_changed(self, sender, profile_name, index):
+    def frontend_profile_changed(self, sender, profile_name, index):
         """ Profile selection was changed by the frontend (user) """
-        # TODO: two expensive loops...
-        self.active_profile = self.profiles[index]
-        self.active_profile_index = index
-        for field_name, value in self.active_profile.values.iteritems():
-            if not hasattr(self, field_name):
-                self.log("Profile update: Ignoring field '%s' that misses in "
-                         "the configuration definition", level='warning')
-                continue
-            #if is_static(self.fields[field_name]):
-            #    # this is a profile-independent (static) field, ignore it
-            #    continue
-            setattr(self, field_name, value)
+        self._ignore_frontend = True
+        self.use_profile(index)
+        self._ignore_frontend = False
+        self.window.editable = self.profiles.active.is_editable
 
-        # a list of all fields the currently selected profile does not provide:
-        undefined_field_values = (set(self.profiles[0].values.keys()) -
-                                  set(self.active_profile.values.keys()))
-        # use the options of the default profile instead:
-        for field_name in undefined_field_values:
-            #if is_static(self.fields[field_name]):
-            #    continue
-            setattr(self, field_name, self.profiles[0].values[field_name])
-
-        self.window.editable = self.active_profile.is_editable
-
-
-    def on_add_profile(self, sender, profile, position):
+    def frontend_add_profile(self, sender, profile_name, position):
         """ User added a profile using the "add profile" button """
-        profile = ConfigurationProfile(profile, **self.fields.name_value_dict)
+        profile = ConfigurationProfile.fromdict(self.fields.name_value_dict,
+                                                name=profile_name)
         self.profiles.insert(position, profile)
         self.window.insert_profile(profile, position)
         self.window.set_active_profile_index(position)
 
-
-    def on_remove_profile(self, sender, position):
+    def frontend_remove_profile(self, sender, position):
         """ User removed a profile using the "remove profile" button """
-        if self.active_profile.is_editable:
-            self.profiles.pop(position)
-            self.window.remove_profile(position)
+        del self.profiles[position]
+        self.window.remove_profile(position)
 
 
     def run_frontend(self):
