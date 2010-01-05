@@ -31,3 +31,18 @@ class FontField(_FontField):
 
     def conf_to_python(self, value):
         return FontDict(_FontField.conf_to_python(self, value))
+
+
+def inject_method(klass, method_name):
+    def wrapper(func):
+        original_meth = getattr(klass, method_name)
+        def chained_method(*args, **kwargs):
+            original_meth(*args, **kwargs)
+            func(*args, **kwargs)
+        setattr(klass, method_name, chained_method)
+        return func
+    return wrapper
+
+@inject_method(Field, '_external_on_initialized')
+def on_initialized(self, kwargs):
+    self.static = kwargs.pop('static', False)

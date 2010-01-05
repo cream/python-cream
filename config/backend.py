@@ -11,6 +11,7 @@ class CreamXMLBackend(dict, Backend):
         dict.__init__(self)
         Backend.__init__(self, backref)
         self.folder = folder or self.backref().basedir # TODO
+        self.statics_file = os.path.join(self.folder, 'static-options.xml')
 
         self.profiles = list()
         self.selected_profile = 0
@@ -19,8 +20,12 @@ class CreamXMLBackend(dict, Backend):
             os.makedirs(self.folder)
 
     def read(self):
+        self.static_options = {}
         for profile in os.listdir(self.folder):
             with open(os.path.join(self.folder, profile)) as fobj:
+                if profile == 'static-options.xml':
+                    self.static_options = unserialize(fobj)
+                    continue
                 try:
                     profile = unserialize(fobj)
                 except ExpatError, e:
@@ -29,6 +34,7 @@ class CreamXMLBackend(dict, Backend):
                     self.profiles.insert(profile['position']-1, profile)
                     if profile.get('selected', False):
                         self.selected_profile = profile['position']
+
 
     def save(self):
         def _(s):
@@ -49,6 +55,15 @@ class CreamXMLBackend(dict, Backend):
                     'position' : profile_list.index(profile),
                     'selected' : selected_profile == profile
                 }, root_node=self.ROOT_ELEMENT, file=fobj)
+
+        static_options = ((name, field.value) for name, field in
+                          self.backref().fields.iteritems() if field.static)
+        with open(self.statics_file, 'w') as fobj:
+            serialize(
+                dict(static_options),
+                root_node='static_options',
+                file=fobj
+            )
 
     def get_option(self, item):
         try:

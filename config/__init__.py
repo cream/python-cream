@@ -13,19 +13,17 @@ class ConfigurationProfile(object):
     """ A configuration profile. Holds name and assigned values. """
     is_editable = True
 
-    def __init__(self, name, editable=True, **values):
+    def __init__(self, name, values, editable=True):
         self.name = name
         self.default_values = values
         self.is_editable = editable
         self._values = values
 
     @classmethod
-    def fromdict(cls, dct, name=None):
-        if name:
-            return cls(name, **dct)
-        else:
-            return cls(dct.pop('name'), dct.pop('editable', True),
-                       **dct.get('values', ()))
+    def fromdict(cls, dct, default_profile):
+        values = default_profile.values.copy()
+        values.update(dct.get('values', ()))
+        return cls(dct.pop('name'), values, dct.pop('editable', True))
 
     @property
     def values(self):
@@ -55,8 +53,9 @@ class ConfigurationProfile(object):
 
 class DefaultProfile(ConfigurationProfile):
     """ Default configuration profile (using in-code defined values) """
-    def __init__(self, **values):
-        ConfigurationProfile.__init__(self, 'Default Profile', False, **values)
+    def __init__(self, values):
+        ConfigurationProfile.__init__(self, 'Default Profile',
+                                      values, editable=False)
 
 
 class ProfileExistsError(Exception):
@@ -78,7 +77,7 @@ class ProfileList(list):
         assert index
 
         if not isinstance(profile, ConfigurationProfile):
-            profile = ConfigurationProfile.fromdict(profile)
+            profile = ConfigurationProfile.fromdict(profile, self.default)
 
         old_profile = self.by_name(profile.name)
         if old_profile is not None:
@@ -105,15 +104,13 @@ class ProfileList(list):
             if profile.name == name:
                 return profile
 
-    def _use(self, profile, fields):
+    def _use(self, profile):
         if isinstance(profile, int):
             self.active = self[profile]
             self.active_index = profile
         else:
             self.active = profile
             self.active_index = self.index(profile)
-        for name, instance in fields.iteritems():
-            instance.value = self.active.values[name]
 
 
 class Configuration(_Configuration):
@@ -127,7 +124,7 @@ class Configuration(_Configuration):
 
     def __init__(self, **kwargs):
         predefined_profiles = self.profiles
-        self.profiles = ProfileList(DefaultProfile(**self.fields.name_value_dict))
+        self.profiles = ProfileList(self.create_profile(default=True))
         self.use_profile(0)
 
         _Configuration.__init__(self, **kwargs)
@@ -138,28 +135,41 @@ class Configuration(_Configuration):
             self.profiles.insert(profile.pop('position'), profile,
                     overwrite=True, set_active=profile.pop('selected', False))
 
-        #for field_name, value in backend.static_options.iteritems():
-        #    setattr(self, field_name, value)
+        for field_name, value in backend.static_options.iteritems():
+            setattr(self, field_name, value)
 
-        if len(self.profiles) > 1:
-            self.window.set_active_profile_index(self.profiles.active_index)
+    def create_profile(self, name=None, default=False):
+        nonstatics = dict(((name, field.value) for name, field in
+                           self.fields.iteritems() if not field.static))
+        if default:
+            return DefaultProfile(nonstatics)
+        else:
+            return ConfigurationProfile(name, nonstatics)
 
     def __setattr__(self, attr, value):
         new_value = super(Configuration, self).__setattr__(attr, value)
-        if new_value is not None:
+        if new_value is not None and not self.fields[attr].static:
             self.profiles.active.set(attr, new_value)
 
     def __getattr__(self, name):
         if name in ('frontend', 'window'):
             # window as alias
             return self.get_frontend()
-        try:
-            return self.profiles.active.values[name]
-        except KeyError:
+
+        field = self.fields.get(name, None)
+        if field is not None:
+            if field.static:
+                return field.value
+            else:
+                return self.profiles.active.values[name]
+        else:
             raise AttributeError("No such attribute '%s'" % name)
 
     def use_profile(self, profile):
-        self.profiles._use(profile, self.fields)
+        self.profiles._use(profile)
+        for name, instance in self.fields.iteritems():
+            if instance.static: continue
+            instance.value = self.profiles.active.values[name]
 
 
     # FRONTEND:
@@ -188,8 +198,7 @@ class Configuration(_Configuration):
 
     def frontend_add_profile(self, sender, profile_name, position):
         """ User added a profile using the "add profile" button """
-        profile = ConfigurationProfile.fromdict(self.fields.name_value_dict,
-                                                name=profile_name)
+        profile = self.create_profile(profile_name)
         self.profiles.insert(position, profile)
         self.window.insert_profile(profile, position)
         self.window.set_active_profile_index(position)
