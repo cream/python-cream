@@ -73,7 +73,7 @@ class ProfileList(list):
         list.append(self, default_profile)
         self.default = default_profile
 
-    def insert(self, index, profile, overwrite=False, set_active=False):
+    def insert(self, index, profile, overwrite=False):
         assert index
 
         if not isinstance(profile, ConfigurationProfile):
@@ -87,9 +87,6 @@ class ProfileList(list):
                 old_profile.values = profile.values
         else:
             list.insert(self, index, profile)
-
-        if set_active:
-            self.active_index = index
 
     def append(self, *args, **kwargs):
         self.insert(len(self), *args, **kwargs)
@@ -132,11 +129,15 @@ class Configuration(_Configuration):
         backend = self.backend_instance
         # add profiles loaded by the backend
         for profile in flatten((backend.profiles, predefined_profiles)):
-            self.profiles.insert(profile.pop('position'), profile,
-                    overwrite=True, set_active=profile.pop('selected', False))
+            set_active = profile.pop('selected', False)
+            position = profile.pop('position')
+            self.profiles.insert(position, profile, overwrite=True)
+            if set_active:
+                self.use_profile(position)
 
         for field_name, value in backend.static_options.iteritems():
             setattr(self, field_name, value)
+
 
     def create_profile(self, name=None, default=False):
         nonstatics = dict(((name, field.value) for name, field in
@@ -170,6 +171,7 @@ class Configuration(_Configuration):
         for name, instance in self.fields.iteritems():
             if instance.static: continue
             instance.value = self.profiles.active.values[name]
+            self.profiles.active.values[name] = instance.value
 
 
     # FRONTEND:
