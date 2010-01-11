@@ -3,7 +3,7 @@ from gpyconf.frontends._gtk import (font_description_to_dict,
                                     dict_to_font_description)
 
 
-_FontField = fields.FontField
+_FontField = FontField
 
 # Override ``FontField`` to add a ``to_string`` method to it's value dict:
 class FontDict(dict):

@@ -3,7 +3,6 @@
 from gpyconf import Configuration as _Configuration
 
 from .backend import CreamXMLBackend
-from .frontend import CreamFrontend
 from cream.util import flatten
 
 class ProfileNotEditable(Exception):
@@ -114,10 +113,14 @@ class Configuration(_Configuration):
     """
     Base class for all cream configurations.
     """
-    frontend = CreamFrontend
     backend = CreamXMLBackend
     profiles = ()
     _ingore_frontend = False
+
+    @property
+    def frontend(self):
+        from .frontend import CreamFrontend
+        return CreamFrontend
 
     def __init__(self, **kwargs):
         predefined_profiles = self.profiles

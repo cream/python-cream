@@ -1,76 +1,33 @@
 import os
 from gpyconf.backends import Backend
-from gpyconf.backends._xml.xmlserialize import serialize, unserialize
+try:
+    from xml.etree import cElementTree as elementtree
+except ImportError:
+    from xml.etree import  ElementTree as elementtree
+
 from cream.util.string import slugify
-from xml.parsers.expat import ExpatError
+
+STATIC_OPTIONS_FILE       = 'static-options.xml'
+CONFIGURATION_SCHEMA_FILE = 'configuration.xml'
 
 class CreamXMLBackend(dict, Backend):
-    ROOT_ELEMENT = 'profile'
-
-    def __init__(self, backref, folder=None):
+    def __init__(self, profiles_folder):
         dict.__init__(self)
-        Backend.__init__(self, backref)
-        self.folder = folder or self.backref().basedir # TODO
-        self.statics_file = os.path.join(self.folder, 'static-options.xml')
-
-        self.profiles = list()
-        self.selected_profile = 0
-
-        if not os.path.isdir(self.folder):
-            os.makedirs(self.folder)
-
-    def read(self):
-        self.static_options = {}
-        for profile in os.listdir(self.folder):
-            with open(os.path.join(self.folder, profile)) as fobj:
-                if profile == 'static-options.xml':
-                    self.static_options = unserialize(fobj)
-                    continue
-                try:
-                    profile = unserialize(fobj)
-                except ExpatError, e:
-                    self.warn("Failed to parse '%s': %s" % (fobj.name, e))
-                else:
-                    self.profiles.insert(profile['position']-1, profile)
-                    if profile.get('selected', False):
-                        self.selected_profile = profile['position']
-
-
-    def save(self):
-        def _(s):
-            return slugify(s) + '.xml'
-
-        profile_list = self.backref().profiles
-        selected_profile = profile_list.active
-
-        for file in os.listdir(self.folder):
-            os.remove(os.path.join(self.folder, file))
-
-        for profile in self.backref().profiles:
-            if not profile.is_editable: continue
-            with open(os.path.join(self.folder, _(profile.name)), 'w') as fobj:
-                serialize({
-                    'name' : profile.name,
-                    'values' : profile.values,
-                    'position' : profile_list.index(profile),
-                    'selected' : selected_profile == profile
-                }, root_node=self.ROOT_ELEMENT, file=fobj)
-
-        static_options = ((name, field.value) for name, field in
-                          self.backref().fields.iteritems() if field.static)
-        with open(self.statics_file, 'w') as fobj:
-            serialize(
-                dict(static_options),
-                root_node='static_options',
-                file=fobj
-            )
+        self.profiles_folder = self.profiles_folder
 
     def get_option(self, item):
         try:
             return self.__getitem__(item)
         except KeyError:
             raise MissingOption(item)
+
     set_option = dict.__setitem__
 
-    options = property(lambda self:self.keys())
+    options = dict.keys
     tree = property(lambda self:self)
+
+    def read(self):
+        pass
+
+    def save(self, profile_list, fields):
+        pass
