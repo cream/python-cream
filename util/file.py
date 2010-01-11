@@ -1,21 +1,9 @@
 # object oriented wrapper to parts of the os module.
 # buggy, haven't tried to use it yet, so don't use.
 import os
+from .import cached_property
 
-alias = property
-class cached_property(object):
-    # from werkzeug (http://werkzeug.pocoo.org)
-    def __init__(self, func, name=None, doc=None):
-        self.func = func
-        self.__name__ = name or func.__name__
-        self.__doc__ = doc or func.__doc__
-
-    def __get__(self, obj, type=None):
-        if obj is None:
-            return self
-        value = self.func(obj)
-        setattr(obj, self.__name__, value)
-        return value
+alias = property # just for noow
 
 
 class FileSystemPath(object):

@@ -1,3 +1,7 @@
+def get_source_file(object):
+    from inspect import getsourcefile
+    return getsourcefile(object)
+
 def joindir(_file, *parts):
     import os
     return os.path.join(os.path.dirname(os.path.abspath(_file)), *parts)
@@ -17,19 +21,18 @@ def urljoin_multi(*parts):
         s = s[:-1]
     return s
 
-def isiterable(iterable, flatten_strings=False, flatten_dicts=False):
+def isiterable(iterable, include_strings=False, include_dicts=True):
     """
     Return `True` if `iterable` is iterable.
     If `iterable` is a string, return the value of `include_strings`.
     """
-    if (not flatten_strings and isinstance(iterable, str)
-        or not flatten_dicts and isinstance(iterable, dict)): return False
-    else:
-        try:
-            iter(iterable)
-            return True
-        except TypeError:
-            return False
+    if isinstance(iterable, basestring): return include_strings
+    if isinstance(iterable, dict): return include_dicts
+    try:
+        iter(iterable)
+        return True
+    except TypeError:
+        return False
 
 def flatten(iterable, n=None, level=0):
     """
