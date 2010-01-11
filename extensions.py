@@ -1,11 +1,7 @@
 import os
 import sys
-import inspect
-import imp
-import xdg.IniFile
-import dbus.service
-import cream
-from cream import ModuleBase
+from . import ModuleBase
+from .meta import MetaDataDB
 
 META_TYPE_EXTENSION = 'Cream Extension'
 
@@ -40,7 +36,7 @@ class ExtensionManager(object):
         self.paths = paths
         self.interface = interface
 
-        self.extensions = cream.MetaDataDB(self.paths[0]) # TODO: multiple paths
+        self.extensions = MetaDataDB(self.paths[0]) # TODO: multiple paths
 
 
     def list(self):
@@ -60,6 +56,7 @@ class ExtensionManager(object):
 
 
     def _load(self, extension, interface=None):
+        import imp
 
         module_name = os.path.splitext(os.path.basename(extension['file']))[0]
         module_path = extension['path']
