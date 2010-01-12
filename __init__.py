@@ -34,6 +34,8 @@ class Component(object):
 
 
 class Configurable(object):
+    use_autosave = True
+
     def __getattr__(self, attr):
         if attr == 'config':
             self._load_config()
@@ -41,13 +43,21 @@ class Configurable(object):
         raise AttributeError(attr)
 
     def _load_config(self, base_path=None):
-        from .config.fromxml import configuration_from_xml_file
-        klass = configuration_from_xml_file(
-            os.path.join(base_path or self._base_path, 'config.xml'))
-        self.config = klass(basedir=os.path.join(base_path or self._base_path,'config'))
+        from .config import Configuration
+        self.config = Configuration.fromxml(base_path or self._base_path)
+
+    def _autosave(self):
+        if self.use_autosave:
+            if hasattr(self, 'config'):
+                # Check if we have a 'config' attribute.
+                # If we don't have one, the configuration wasn't loaded,
+                # so don't save anything to avoid blowing up the
+                # configuration directory with empty configuration files.
+                self.config.save()
 
 
-class ModuleBase(cream.ipc.Object, Component): # TODO: Move to some common place for extensions and modules.
+class ModuleBase(cream.ipc.Object, Component):
+    # TODO: Move to some common place for extensions and modules.
     """ Base class for module-like objects like modules and extensions """
 
     __meta__ = 'meta.xml'
@@ -80,13 +90,20 @@ class ModuleBase(cream.ipc.Object, Component): # TODO: Move to some common place
 
 class Module(ModuleBase, Configurable):
     """ Baseclass for all modules... """
+
     def main(self):
         """ Run a GLib-mainloop. """
 
         self._mainloop = gobject.MainLoop()
-        self._mainloop.run()
+        try:
+            self._mainloop.run()
+        except (SystemError, KeyboardInterrupt), e:
+            # shut down gracefully.
+            self.quit()
+            raise e
 
 
     def quit(self):
+        self._autosave()
         self._mainloop.quit()
 
