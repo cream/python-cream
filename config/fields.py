@@ -1,4 +1,5 @@
 from gpyconf.fields import *
+from gpyconf.fields import __all__
 from gpyconf.frontends._gtk import (font_description_to_dict,
                                     dict_to_font_description)
 

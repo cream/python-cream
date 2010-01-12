@@ -122,33 +122,34 @@ class Configuration(_Configuration):
         from .frontend import CreamFrontend
         return CreamFrontend
 
-    def __init__(self, **kwargs):
+    @classmethod
+    def fromxml(cls, directory='.', classname=None):
+        from gpyconf.mvc import ComponentFactory
+        backend = CreamXMLBackend(directory)
+        class_dict = backend.read_scheme()
+        klass = type(classname or cls.__name__, (cls,), class_dict)
+        return klass(backend_instance=backend)
+
+    def read(self):
         predefined_profiles = self.profiles
-        self.profiles = ProfileList(self.create_profile(default=True))
-        self.use_profile(0)
 
-        _Configuration.__init__(self, **kwargs)
+        self.profiles = ProfileList(DefaultProfile(self.fields)) # TODO: remove static options
 
-        backend = self.backend_instance
-        # add profiles loaded by the backend
-        for profile in flatten((backend.profiles, predefined_profiles)):
-            set_active = profile.pop('selected', False)
-            position = profile.pop('position')
-            self.profiles.insert(position, profile, overwrite=True)
-            if set_active:
-                self.use_profile(position)
+        static_options, profiles = self.backend_instance.read()
 
-        for field_name, value in backend.static_options.iteritems():
+        for field_name, value in static_options.iteritems():
             setattr(self, field_name, value)
 
+        active_profile = 0
+        for profile in flatten((profiles, predefined_profiles)):
+            position = profile.pop('position')
+            self.profiles.insert(position, profile, overwrite=True)
+            if profile.pop('selected', False):
+                active_profile = position
 
-    def create_profile(self, name=None, default=False):
-        nonstatics = dict(((name, field.value) for name, field in
-                           self.fields.iteritems() if not field.static))
-        if default:
-            return DefaultProfile(nonstatics)
-        else:
-            return ConfigurationProfile(name, nonstatics)
+        self.use_profile(active_profile)
+
+        self.initially_read = True
 
     def __setattr__(self, attr, value):
         new_value = super(Configuration, self).__setattr__(attr, value)
@@ -156,10 +157,6 @@ class Configuration(_Configuration):
             self.profiles.active.set(attr, new_value)
 
     def __getattr__(self, name):
-        if name in ('frontend', 'window'):
-            # window as alias
-            return self.get_frontend()
-
         field = self.fields.get(name, None)
         if field is not None:
             if field.static:
@@ -191,7 +188,7 @@ class Configuration(_Configuration):
 
     def frontend_field_value_changed(self, *args):
         if not self._ignore_frontend:
-            super(Configuration, self).frontend_field_value_changed(*args)
+            _Configuration.frontend_field_value_changed(self, *args)
 
 
     def frontend_profile_changed(self, sender, profile_name, index):
@@ -217,3 +214,9 @@ class Configuration(_Configuration):
     def run_frontend(self):
         _Configuration.run_frontend(self)
         del self.frontend_instance
+
+
+    # BACKEND
+    def save(self):
+        self.emit('pre-save')
+        self.backend_instance.save(self.profiles, self.fields)
