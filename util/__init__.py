@@ -46,7 +46,7 @@ def flatten(iterable, n=None, level=0):
         yield iterable; return
 
     for item in iterable:
-        if isiterable(item):
+        if isiterable(item, include_dicts=False):
             for subitem in flatten(item, n=n, level=level+1):
                 yield subitem
         else:
@@ -65,3 +65,8 @@ class cached_property(object):
         value = self.func(obj)
         setattr(obj, self.__name__, value)
         return value
+
+def random_hash(bits=100, hashfunction='sha256'):
+    from random import getrandbits
+    import hashlib
+    return getattr(hashlib, hashfunction)(str(getrandbits(bits))).hexdigest()
