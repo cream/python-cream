@@ -102,8 +102,11 @@ class ProfileList(list):
 
     def _use(self, profile):
         if isinstance(profile, int):
-            self.active = self[profile]
-            self.active_index = profile
+            try:
+                self.active = self[profile]
+                self.active_index = profile
+            except IndexError:
+                self._use(0)
         else:
             self.active = profile
             self.active_index = self.index(profile)
@@ -133,7 +136,7 @@ class Configuration(_Configuration):
     def read(self):
         predefined_profiles = self.profiles
 
-        self.profiles = ProfileList(DefaultProfile(self.fields)) # TODO: remove static options
+        self.profiles = ProfileList(DefaultProfile(self.fields.name_value_dict)) # TODO: remove static options
 
         static_options, profiles = self.backend_instance.read()
 
@@ -177,6 +180,7 @@ class Configuration(_Configuration):
     # FRONTEND:
     def _init_frontend(self, fields):
         _Configuration._init_frontend(self, fields)
+        self.window = self.frontend_instance
 
         self.window.add_profiles(self.profiles)
 
@@ -200,7 +204,7 @@ class Configuration(_Configuration):
 
     def frontend_add_profile(self, sender, profile_name, position):
         """ User added a profile using the "add profile" button """
-        profile = self.create_profile(profile_name)
+        profile = ConfigurationProfile(profile_name, self.fields.name_value_dict)
         self.profiles.insert(position, profile)
         self.window.insert_profile(profile, position)
         self.window.set_active_profile_index(position)

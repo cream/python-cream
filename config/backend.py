@@ -74,7 +74,7 @@ class CreamXMLBackend(dict, Backend):
                 try:
                     profile = unserialize(f)
                 except ExpatError, e:
-                    self.warn("Failed to parse '%s': %s" % (fobj.name, e))
+                    self.warn("Failed to parse '%s': %s" % (f.name, e))
                 else:
                     profiles.append(profile)
 
