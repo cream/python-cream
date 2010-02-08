@@ -1,0 +1,3 @@
+[submodule "contrib/melange"]
+	path = contrib/melange
+	url = git://github.com/cream/melange-contrib.git
