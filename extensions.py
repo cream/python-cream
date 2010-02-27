@@ -2,7 +2,7 @@ import os
 import sys
 import inspect
 
-from . import ModuleBase
+from . import Component
 from .meta import MetaDataDB
 
 META_TYPE_EXTENSION = 'Cream Extension'
@@ -17,14 +17,14 @@ def register(ext):
     return ext
 
 
-class Extension(ModuleBase):
+class Extension(Component):
     """ Class for building extensions. """
 
     def __init__(self, interface):
         """
         :param interface: An `cream.extensions.ExtensionInterface`.
         """
-        ModuleBase.__init__(self)
+        Component.__init__(self)
         self.interface = interface
 
         self.path = self._base_path

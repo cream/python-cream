@@ -5,6 +5,9 @@ import dbus.proxies
 import dbus.service
 from dbus.lowlevel import SignalMessage
 
+import dbus.mainloop.glib
+dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
 from . import hacks
 from .tools import bus_name_to_path, path_to_bus_name
 
