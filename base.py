@@ -32,11 +32,11 @@ class Component(object):
     def __init__(self):
 
         sourcefile = os.path.abspath(get_source_file(self.__class__))
-        self._base_path = os.path.dirname(sourcefile)
 
-        os.chdir(self._base_path)
+        base_path = os.path.dirname(sourcefile)
+        os.chdir(base_path)
 
-        self.__meta__ = os.path.join(self._base_path, self.__meta__)
+        self.__meta__ = os.path.join(base_path, self.__meta__)
         self.meta = MetaData(self.__meta__)
 
 
@@ -51,7 +51,7 @@ class Component(object):
     def _load_config(self, base_path=None):
 
         from .config import Configuration
-        self.config = Configuration.fromxml(base_path or self._base_path)
+        self.config = Configuration.fromxml(base_path or self.meta['path'])
 
 
     def _autosave(self):

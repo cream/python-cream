@@ -136,18 +136,19 @@ class Object(dbus.service.Object):
             message.append(signature=signature, *args)
             location[0].send_message(message)
 
-    def __init__(self, bus, interface, path=None):
 
-        if path is None:
-            path = bus_name_to_path(interface)
+    def __init__(self, bus_name, path, interface=None, bus=SESSION_BUS):
 
-        dbus.service.Object.__init__(self, bus, path)
+        self._dbus_bus_name = dbus.service.BusName(bus_name, bus)
+
+        dbus.service.Object.__init__(self, self._dbus_bus_name, path)
         self._bus = bus
-        self._interface = interface
+        self._bus_name = bus_name
         self._path = path
+        self._interface = interface or bus_name
 
         # set the new interface
-        self.__class__._set_interface(interface)
+        self.__class__._set_interface(self._interface)
 
 """
 class Module(Object):

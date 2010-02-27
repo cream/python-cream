@@ -27,7 +27,7 @@ class Extension(Component):
         Component.__init__(self)
         self.interface = interface
 
-        self.path = self._base_path
+        self.path = self.meta['path']
 
 
 class ExtensionManager(object):
