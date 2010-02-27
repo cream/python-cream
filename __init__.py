@@ -22,7 +22,6 @@ from .base import Component
 
 CONFIG_AUTOSAVE = True
 
-
 class Module(Component):
     """ Baseclass for all modules... """
 
