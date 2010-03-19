@@ -28,6 +28,7 @@ class Component(object):
     """ Baseclass for e. g. cream.Module and cream.extensions.Extension. """
 
     __meta__ = 'meta.xml'
+    config_loaded = False
 
     def __init__(self):
 
@@ -52,6 +53,7 @@ class Component(object):
 
         from .config import Configuration
         self.config = Configuration.fromxml(base_path or self.meta['path'])
+        self.config_loaded = True
 
 
     def _autosave(self):
