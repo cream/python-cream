@@ -1,4 +1,5 @@
 import gtk
+import cairo
 
 class CompositeBin(gtk.Fixed):
     """ A subclass of `GtkFixed` enabling composition of child widgets to the parent widget. """
@@ -6,6 +7,7 @@ class CompositeBin(gtk.Fixed):
     def __init__(self):
 
         self.alpha = 1
+        self.children = []
 
         gtk.Fixed.__init__(self)
 
@@ -18,28 +20,37 @@ class CompositeBin(gtk.Fixed):
 
     def expose_cb(self, widget, event):
 
-        if self.child.window:
-            ctx = widget.window.cairo_create()
-            ctx.set_operator(cairo.OPERATOR_OVER)
+        ctx = widget.window.cairo_create()
+        ctx.set_operator(cairo.OPERATOR_OVER)
 
-            alloc = self.child.allocation
-
-            ctx.set_source_pixmap(self.child.window, alloc.x, alloc.y)
+        for child in self.children:
+            ctx.rectangle(*event.area)
+            alloc = child.allocation
+            ctx.set_source_pixmap(child.window, alloc.x, alloc.y)
             ctx.paint_with_alpha(self.alpha)
         return False
 
 
-    def add(self, child):
+    def add(self, child, x, y):
         """
         Add a widget.
 
         :param child: A `GtkWidget` to add to the `CompositedBin`.
         """
 
-        self.child = child
-        self.child.connect('realize', self.child_realize_cb)
-        self.put(child, 0, 0)
+        self.children.append(child)
+        child.connect('realize', self.child_realize_cb)
+        self.put(child, x, y)
+
+
+    def remove(self, child):
+
+        gtk.Fixed.remove(self, child)
+        child.realize()
 
 
     def child_realize_cb(self, widget):
-        widget.window.set_composited(True)
+        try:
+            widget.window.set_composited(True)
+        except:
+            pass
