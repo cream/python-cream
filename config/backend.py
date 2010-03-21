@@ -1,37 +1,49 @@
 import os
 
-try:
-    from xml.etree import cElementTree as elementtree
-except ImportError:
-    from xml.etree import  ElementTree as elementtree
-from xml.parsers.expat import ExpatError
+from lxml.etree import parse as parse_xml
 
+import gpyconf.fields
+import gpyconf.contrib.gtk
+import cream.config.fields
 from gpyconf.backends import Backend
-from gpyconf.backends._xml.xmlserialize import to_python_object, unserialize, serialize
-from cream.config import fields
+from gpyconf.backends._xml.xmlserialize import unserialize_file, unserialize_atomic, serialize_to_file
 from cream.util.string import slugify
+
+FIELD_TYPE_MAP = {
+    'char' : 'str',
+    'color' : 'str',
+    'font' : 'str',
+    'integer' : 'int',
+    'hotkey' : 'str'
+}
 
 
 CONFIGURATION_DIRECTORY   = 'configuration'
 STATIC_OPTIONS_FILE       = 'static-options.xml'
-CONFIGURATION_SCHEMA_FILE = 'configuration.xml'
+CONFIGURATION_SCHEME_FILE = 'configuration.xml'
 PROFILE_ROOT_NODE         = 'configuration_profile'
 STATIC_OPTIONS_ROOT_NODE  = 'static_options'
 
-NONFLAT_FIELDS = ('dict', 'list', 'tuple') # opposite of "flat"?
 
-GPYCONF_FIELDS_LOWERCASED = dict((name.lower()[:-5], getattr(fields, name))
-                                 for name in fields.__all__)
-TYPE_ALIASES = {
-    'str' : 'char',
-    'int' : 'integer'
-}
+def get_field(name):
+    if not name.endswith('Field'):
+        name = name.title() + 'Field'
+
+    try: return getattr(cream.config.fields, name)
+    except AttributeError: pass
+    try: return getattr(gpyconf.fields, name)
+    except AttributeError: pass
+    try: return getattr(gpyconf.contrib.gtk, name)
+    except AttributeError:
+        raise FieldNotFound(name)
 
 
-def field_for_type(type):
-    return GPYCONF_FIELDS_LOWERCASED[TYPE_ALIASES.get(type, type)]
+class FieldNotFound(Exception):
+    pass
 
 class CreamXMLBackend(dict, Backend):
+    compatibility_mode = False
+
     def __init__(self, directory='.'):
         Backend.__init__(self, None)
         dict.__init__(self)
@@ -40,24 +52,19 @@ class CreamXMLBackend(dict, Backend):
                                               CONFIGURATION_DIRECTORY)
 
     def read_scheme(self):
-        field_scheme = {}
+        tree = parse_xml(os.path.join(self.directory, CONFIGURATION_SCHEME_FILE))
+        root = tree.getroot()
+        scheme = {}
 
-        xmltree = elementtree.parse(os.path.join(self.directory,
-                                                 CONFIGURATION_SCHEMA_FILE))
-        root_node = xmltree.getroot()
-        for node in root_node.getchildren():
-            option_name = node.tag
-            attributes = node.attrib
-            field_type = attributes.pop('field')
-            if field_type in NONFLAT_FIELDS:
-                attributes['default'] = to_python_object(node, field_type)
-            else:
-                attributes.setdefault('default', node.text)
-            field = field_for_type(field_type)(**attributes)
+        for child in root.getchildren():
+            option_name = child.tag
+            attributes = dict(child.attrib)
+            option_type = attributes.pop('type')
+            attributes['default'] = unserialize_atomic(child, FIELD_TYPE_MAP)
+            scheme[option_name] = get_field(option_type)(**attributes)
 
-            field_scheme[option_name] = field
+        return scheme
 
-        return field_scheme
 
     def read(self):
         if not os.path.exists(self.configuration_dir):
@@ -67,16 +74,12 @@ class CreamXMLBackend(dict, Backend):
         profiles = []
 
         for profile in os.listdir(self.configuration_dir):
-            with open(os.path.join(self.configuration_dir, profile)) as f:
-                if profile == STATIC_OPTIONS_FILE:
-                    static_options.update(unserialize(f))
-                    continue
-                try:
-                    profile = unserialize(f)
-                except ExpatError, e:
-                    self.warn("Failed to parse '%s': %s" % (f.name, e))
-                else:
-                    profiles.append(profile)
+            obj = unserialize_file(os.path.join(self.configuration_dir, profile))
+            if profile == STATIC_OPTIONS_FILE:
+                static_options.update(obj)
+                continue
+            else:
+                profiles.append(obj)
 
         return static_options, profiles
 
@@ -84,19 +87,22 @@ class CreamXMLBackend(dict, Backend):
         if not os.path.exists(self.configuration_dir):
             os.makedirs(self.configuration_dir)
 
-        for profile in (p for p in profile_list if p.is_editable):
-            with open(os.path.join(self.configuration_dir,
-                                   slugify(profile.name)+'.xml'), 'w') as fobj:
-                serialize({
-                    'name' : profile.name,
-                    'values' : profile.values,
-                    'position' : profile_list.index(profile),
-                    'selected' : profile_list.active == profile
-                }, root_node=PROFILE_ROOT_NODE, file=fobj)
+        for index, profile in enumerate(profile_list):
+            if not profile.is_editable: continue
 
-        with open(os.path.join(self.configuration_dir, STATIC_OPTIONS_FILE), 'w') as f:
-            serialize(
-                dict((n, f.value) for n, f in  fields.iteritems() if f.static),
-                root_node=STATIC_OPTIONS_ROOT_NODE,
-                file=f
-            )
+            filename = os.path.join(self.configuration_dir,
+                                    slugify(profile.name)+'.xml')
+
+            serialize_to_file({
+                'name' : profile.name,
+                'values' : profile.values,
+                'position' : index,
+                'selected' : profile_list.active == profile
+            }, filename, tag=PROFILE_ROOT_NODE)
+
+        static_options = dict((name, field.value) for name, field in
+                              fields.iteritems() if field.static)
+        if static_options:
+            serialize_to_file(static_options,
+                os.path.join(self.configuration_dir, STATIC_OPTIONS_FILE),
+                tag=STATIC_OPTIONS_ROOT_NODE)
