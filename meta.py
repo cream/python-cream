@@ -1,5 +1,5 @@
 import os
-from xml.dom.minidom import parse as parse_xml_file
+from lxml.etree import parse as parse_xml_file
 
 class MetaDataDB(object): # TODO: Move to cream.meta?
 
@@ -44,13 +44,8 @@ class MetaData(dict): # TODO: Move to cream.meta?
         self['filepath'] = os.path.abspath(path)
         self['path'] = os.path.dirname(self['filepath'])
 
-        self.dom = parse_xml_file(path)
-
-        for n in self.dom.getElementsByTagName('meta')[0].childNodes:
-            if n.nodeType == n.ELEMENT_NODE:
-                key = n.nodeName
-                value = n.childNodes[0].data
-                self[key] = value
+        for node in parse_xml_file(path).getroot():
+            self[node.tag] = node.text
 
 
     @classmethod
