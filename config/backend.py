@@ -7,6 +7,7 @@ import gpyconf.contrib.gtk
 import cream.config.fields
 from gpyconf.backends import Backend
 from gpyconf.backends._xml.xmlserialize import unserialize_file, unserialize_atomic, serialize_to_file
+from lxml.etree import XMLSyntaxError
 from cream.util.string import slugify
 
 FIELD_TYPE_MAP = {
@@ -74,12 +75,17 @@ class CreamXMLBackend(dict, Backend):
         profiles = []
 
         for profile in os.listdir(self.configuration_dir):
-            obj = unserialize_file(os.path.join(self.configuration_dir, profile))
-            if profile == STATIC_OPTIONS_FILE:
-                static_options.update(obj)
-                continue
+            try:
+                obj = unserialize_file(os.path.join(self.configuration_dir, profile))
+            except XMLSyntaxError,  err:
+                self.warn("Could not parse XML configuration file '{file}': {error}".format(
+                    file=profile, error=err))
             else:
-                profiles.append(obj)
+                if profile == STATIC_OPTIONS_FILE:
+                    static_options.update(obj)
+                    continue
+                else:
+                    profiles.append(obj)
 
         return static_options, profiles
 
