@@ -1,5 +1,6 @@
 import gtk
 import cairo
+import time
 
 class CompositeBin(gtk.Fixed):
     """ A subclass of `GtkFixed` enabling composition of child widgets to the parent widget. """
@@ -23,11 +24,12 @@ class CompositeBin(gtk.Fixed):
         ctx = widget.window.cairo_create()
         ctx.set_operator(cairo.OPERATOR_OVER)
 
+        ctx.rectangle(*event.area)
+
         for child in self.children:
-            ctx.rectangle(*event.area)
             alloc = child.allocation
             ctx.set_source_pixmap(child.window, alloc.x, alloc.y)
-            ctx.paint_with_alpha(self.alpha)
+            ctx.paint()
         return False
 
 
