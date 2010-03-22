@@ -34,6 +34,12 @@ class HotkeyFeature(gobject.GObject):
         for k, f in self.component().config.fields.iteritems():
             if isinstance(f, HotkeyField):
                 self.broker.set_hotkey(f.action, f.value)
+                f.connect('value-changed', self.configuration_field_value_changed_cb)
+
+
+    def configuration_field_value_changed_cb(self, source, field, value):
+
+        self.broker.set_hotkey(field.action, field.value)
 
 
     def hotkey_activated_cb(self, action):
