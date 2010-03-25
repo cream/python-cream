@@ -1,3 +1,11 @@
+def set_process_name(name):
+    from procname import setprocname
+    return setprocname(name)
+
+def get_process_name():
+    from procname import getprocname
+    return getprocname()
+
 def get_source_file(object):
     from inspect import getsourcefile
     return getsourcefile(object)
