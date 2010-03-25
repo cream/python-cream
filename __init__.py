@@ -25,11 +25,13 @@ CONFIG_AUTOSAVE = True
 class Module(Component):
     """ Baseclass for all modules... """
 
-    def main(self):
+    def main(self, enable_threads=True):
         """ Run a GLib-mainloop. """
 
         import gobject
-        gobject.threads_init()
+
+        if enable_threads:
+            gobject.threads_init()
 
         self._mainloop = gobject.MainLoop()
         try:

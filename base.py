@@ -21,6 +21,7 @@ import os
 from cream.util import cached_property, get_source_file
 
 from .meta import MetaData
+from .features import FEATURES, NoSuchFeature
 
 CONFIG_AUTOSAVE = True
 
@@ -30,7 +31,7 @@ class Component(object):
     __meta__ = 'meta.xml'
     config_loaded = False
 
-    def __init__(self):
+    def __init__(self, features=[]):
 
         sourcefile = os.path.abspath(get_source_file(self.__class__))
 
@@ -39,6 +40,12 @@ class Component(object):
 
         self.__meta__ = os.path.join(base_path, self.__meta__)
         self.meta = MetaData(self.__meta__)
+
+        for feature in features:
+            try:
+                f = FEATURES[feature](self)
+            except KeyError:
+                raise NoSuchFeature()
 
 
     def __getattr__(self, attr):
