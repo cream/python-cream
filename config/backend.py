@@ -15,7 +15,8 @@ FIELD_TYPE_MAP = {
     'color' : 'str',
     'font' : 'str',
     'integer' : 'int',
-    'hotkey' : 'str'
+    'hotkey' : 'str',
+    'boolean' : 'bool'
 }
 
 
