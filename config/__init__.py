@@ -3,8 +3,15 @@
 from gpyconf import Configuration as _Configuration
 from gpyconf.fields import Field
 
-from .backend import CreamXMLBackend
+from .backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 from cream.util import flatten
+
+class NoConfigurationFileError(Exception):
+    """
+    Raised if one tries to access a module's configuration
+    but that module hasn't defined any.
+    """
+    pass
 
 class ProfileNotEditable(Exception):
     pass
@@ -128,11 +135,15 @@ class Configuration(_Configuration):
 
     @classmethod
     def fromxml(cls, directory='.', classname=None):
-        from gpyconf.mvc import ComponentFactory
-        backend = CreamXMLBackend(directory)
-        class_dict = backend.read_scheme()
-        klass = type(classname or cls.__name__, (cls,), class_dict)
-        return klass(backend_instance=backend)
+        if CreamXMLBackend.configuration_file_exists(directory):
+            from gpyconf.mvc import ComponentFactory
+            backend = CreamXMLBackend(directory)
+            class_dict = backend.read_scheme()
+            klass = type(classname or cls.__name__, (cls,), class_dict)
+            return klass(backend_instance=backend)
+        else:
+            raise NoConfigurationFileError(
+                "Could not find %s." % CONFIGURATION_SCHEME_FILE)
 
     def read(self):
         predefined_profiles = self.profiles
@@ -219,6 +230,9 @@ class Configuration(_Configuration):
     def run_frontend(self):
         _Configuration.run_frontend(self)
         del self.frontend_instance
+
+    def show_dialog(self):
+        self.run_frontend()
 
 
     # BACKEND

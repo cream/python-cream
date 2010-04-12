@@ -53,6 +53,10 @@ class CreamXMLBackend(dict, Backend):
         self.configuration_dir = os.path.join(self.directory,
                                               CONFIGURATION_DIRECTORY)
 
+    @staticmethod
+    def configuration_file_exists(directory):
+        return os.path.isfile(os.path.join(directory, CONFIGURATION_SCHEME_FILE))
+
     def read_scheme(self):
         tree = parse_xml(os.path.join(self.directory, CONFIGURATION_SCHEME_FILE))
         root = tree.getroot()
