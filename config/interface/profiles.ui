@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy project-wide -->
+  <object class="GtkHBox" id="profile_box">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkComboBox" id="profile_selector">
+        <property name="visible">True</property>
+      </object>
+      <packing>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="profile_add">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <child>
+          <object class="GtkImage" id="profile_add_image">
+            <property name="visible">True</property>
+            <property name="stock">gtk-add</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="profile_remove">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <child>
+          <object class="GtkImage" id="profile_remove_image">
+            <property name="visible">True</property>
+            <property name="stock">gtk-remove</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="position">2</property>
+      </packing>
+    </child>
+  </object>
+</interface>

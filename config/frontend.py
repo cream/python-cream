@@ -1,29 +1,30 @@
 import os
 import gtk
-from gpyconf.frontends._gtk import GtkConfigurationWindow
-from cream.gui.builder import GtkBuilderInterface
+from gpyconf.frontends.gtk import ConfigDialog
 from cream.gui import dialogs
 from cream.util import joindir
 
 INTERFACE_FILE = os.path.join('interface', 'config-dialog.glade')
 
-class CreamFrontend(GtkConfigurationWindow, GtkBuilderInterface):
+class CreamFrontend(ConfigDialog):
     _editable = True
     _new_events = ('profile-changed', 'add-profile', 'remove-profile')
 
-    def __init__(self, backref, fields):
+    def __init__(self, *args, **kwargs):
+
         self.profiles = []
 
-        GtkBuilderInterface.__init__(self, joindir(__file__, INTERFACE_FILE))
-
-        GtkConfigurationWindow.__init__(self, backref, fields)
+        ConfigDialog.__init__(self, *args, **kwargs)
         self.add_events(self._new_events)
 
-    def build_ui(self):
-        # build the UI (bind GtkBuilder stuff to the right variables)
-        self._dialog = self.window
-        self._widgets = self.notebook
-        self._close = self.button_close
+        self.profile_interface = gtk.Builder()
+        self.profile_interface.add_from_file(joindir(__file__, 'interface/profiles.ui'))
+
+        self.profile_box = self.profile_interface.get_object('profile_box')
+        self.profile_selector = self.profile_interface.get_object('profile_selector')
+        self.profile_add = self.profile_interface.get_object('profile_add')
+        self.profile_remove = self.profile_interface.get_object('profile_remove')
+
         self.profile_selector.connect('changed', self.on_profile_changed)
         self.profile_add.connect('clicked', self.on_add_profile)
         self.profile_remove.connect('clicked', self.on_remove_profile)
@@ -34,6 +35,9 @@ class CreamFrontend(GtkConfigurationWindow, GtkBuilderInterface):
         cell_renderer = gtk.CellRendererText()
         self.profile_selector.pack_start(cell_renderer)
         self.profile_selector.add_attribute(cell_renderer, 'text', 0)
+
+        self.layout.pack_start(self.profile_box, False, False, 0)
+        self.layout.reorder_child(self.profile_box, 0)
 
 
     def add_profiles(self, profiles):
@@ -100,10 +104,10 @@ class CreamFrontend(GtkConfigurationWindow, GtkBuilderInterface):
         # set widgets sensitive (or not)
         if value:
             if not self.editable:
-                self.notebook.set_sensitive(True)
+                self.content.set_sensitive(True)
                 self.profile_remove.set_sensitive(True)
         else:
-            self.notebook.set_sensitive(False)
+            self.content.set_sensitive(False)
             self.profile_remove.set_sensitive(False)
         self._editable = value
 
@@ -111,5 +115,5 @@ class CreamFrontend(GtkConfigurationWindow, GtkBuilderInterface):
         self.profile_selector.set_active(index)
 
     def run(self):
-        GtkConfigurationWindow.run(self)
-        self._dialog.destroy()
+        ConfigDialog.run(self)
+        self.dialog.destroy()
