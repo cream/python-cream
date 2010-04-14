@@ -1,12 +1,12 @@
 import os
 import gtk
-from gpyconf.frontends.gtk import ConfigDialog
+from gpyconf.frontends.gtk import ConfigurationDialog
 from cream.gui import dialogs
 from cream.util import joindir
 
 INTERFACE_FILE = os.path.join('interface', 'config-dialog.glade')
 
-class CreamFrontend(ConfigDialog):
+class CreamFrontend(ConfigurationDialog):
     _editable = True
     _new_events = ('profile-changed', 'add-profile', 'remove-profile')
 
@@ -14,7 +14,7 @@ class CreamFrontend(ConfigDialog):
 
         self.profiles = []
 
-        ConfigDialog.__init__(self, *args, **kwargs)
+        ConfigurationDialog.__init__(self, *args, **kwargs)
         self.add_events(self._new_events)
 
         self.profile_interface = gtk.Builder()
@@ -115,5 +115,5 @@ class CreamFrontend(ConfigDialog):
         self.profile_selector.set_active(index)
 
     def run(self):
-        ConfigDialog.run(self)
+        ConfigurationDialog.run(self)
         self.dialog.destroy()
