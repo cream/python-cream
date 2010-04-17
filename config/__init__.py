@@ -147,6 +147,7 @@ class Configuration(_Configuration):
 
         configuration = cls(backend_instance=backend)
         configuration._add_fields(configuration_scheme)
+        configuration._add_fields(configuration.get_additional_fields())
         configuration.read()
         return configuration
 
