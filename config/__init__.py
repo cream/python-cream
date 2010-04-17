@@ -146,9 +146,14 @@ class Configuration(_Configuration):
             configuration_scheme = dict()
 
         configuration = cls(backend_instance=backend)
-        configuration.fields.update(configuration_scheme)
+        configuration._add_fields(configuration_scheme)
         configuration.read()
         return configuration
+
+    def _add_fields(self, dct):
+        for name, field in dct.iteritems():
+            field.field_var = name
+            self.fields[name] = field
 
     def read(self):
         predefined_profiles = self.profiles
