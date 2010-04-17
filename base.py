@@ -54,7 +54,7 @@ class Component(object):
 
         for feature in self.context.manifest['features']:
             try:
-                f = FEATURES[feature](self)
+                FEATURES[feature](self)
             except KeyError:
                 raise NoSuchFeature, "Could not load feature '{0}'!".format(feature)
 

@@ -6,7 +6,7 @@ from gpyconf.fields import Field
 from .backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 from cream.util import flatten
 
-class NoConfigurationFileError(Exception):
+class MissingConfigurationDefinitionFile(Exception):
     """
     Raised if one tries to access a module's configuration
     but that module hasn't defined any.
@@ -15,6 +15,7 @@ class NoConfigurationFileError(Exception):
 
 class ProfileNotEditable(Exception):
     pass
+
 
 class ConfigurationProfile(object):
     """ A configuration profile. Holds name and assigned values. """
@@ -133,17 +134,21 @@ class Configuration(_Configuration):
         from .frontend import CreamFrontend
         return CreamFrontend
 
+    def __init__(self, **kwargs):
+        super(Configuration, self).__init__(read=False, **kwargs)
+
     @classmethod
     def fromxml(cls, directory='.', classname=None):
-        if CreamXMLBackend.configuration_file_exists(directory):
-            from gpyconf.mvc import ComponentFactory
-            backend = CreamXMLBackend(directory)
-            class_dict = backend.read_scheme()
-            klass = type(classname or cls.__name__, (cls,), class_dict)
-            return klass(backend_instance=backend)
-        else:
-            raise NoConfigurationFileError(
-                "Could not find %s." % CONFIGURATION_SCHEME_FILE)
+        backend = CreamXMLBackend(directory)
+        try:
+            configuration_scheme = backend.read_scheme()
+        except MissingConfigurationDefinitionFile:
+            configuration_scheme = dict()
+
+        configuration = cls(backend_instance=backend)
+        configuration.fields.update(configuration_scheme)
+        configuration.read()
+        return configuration
 
     def read(self):
         predefined_profiles = self.profiles
@@ -172,7 +177,7 @@ class Configuration(_Configuration):
             self.profiles.active.set(attr, new_value)
 
     def __getattr__(self, name):
-        field = self.fields.get(name, None)
+        field = self.fields.get(name)
         if field is not None:
             if field.static:
                 return field.value
