@@ -7,16 +7,33 @@ class NoSuchFeature(BaseException):
     pass
 
 
-class ConfigurationFeature(object):
+class Feature(object):
+    def __finalize__(self):
+        pass
+
+
+class ConfigurationFeature(Feature):
 
     def __init__(self, component):
+
+        Feature.__init__(self)
+
+        self.autosave = True
 
         from .config import Configuration
         component.config = Configuration.fromxml(component.context.wd)
         component.config_loaded = True
 
+        self.config = component.config
 
-class HotkeyFeature(gobject.GObject):
+
+    def __finalize__(self):
+
+        if self.autosave:
+            self.config.save()
+
+
+class HotkeyFeature(Feature, gobject.GObject):
 
     __gtype_name__ = 'HotkeyFeature'
     __gsignals__ = {
@@ -24,6 +41,8 @@ class HotkeyFeature(gobject.GObject):
         }
 
     def __init__(self, component):
+
+        Feature.__init__(self)
 
         from gpyconf.contrib.gtk import HotkeyField
         import cream.ipc
@@ -56,6 +75,6 @@ class HotkeyFeature(gobject.GObject):
 
 
 FEATURES.update({
-    'org.cream.hotkeys': HotkeyFeature,
-    'org.cream.config': HotkeyFeature,
+    'org.cream.hotkeys': (HotkeyFeature, 10),
+    'org.cream.config': (ConfigurationFeature, 0),
     })

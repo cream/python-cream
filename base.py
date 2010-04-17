@@ -17,6 +17,7 @@
 # MA 02110-1301, USA.
 
 import os
+import gobject
 
 from cream.util import cached_property, get_source_file
 
@@ -49,37 +50,23 @@ class Component(object):
         base_path = os.path.dirname(sourcefile)
         os.chdir(base_path)
 
+        # Create context and load manifest file...
         self.__manifest__ = os.path.join(base_path, self.__manifest__)
         self.context = Context(self.__manifest__)
 
+        # Load required features...
+        f = {}
+        self._features = []
+
         for feature in self.context.manifest['features']:
             try:
-                FEATURES[feature](self)
+                cls, priority = FEATURES[feature]
+                if not f.has_key(priority):
+                    f[priority] = []
+                f[priority].append(cls)
             except KeyError:
                 raise NoSuchFeature, "Could not load feature '{0}'!".format(feature)
 
-
-    def __getattr__(self, attr):
-
-        if attr == 'config':
-            self._load_config()
-            return self.config
-        raise AttributeError(attr)
-
-
-    def _load_config(self, base_path=None):
-
-        from .config import Configuration
-        self.config = Configuration.fromxml(base_path or self.context.wd)
-        self.config_loaded = True
-
-
-    def _autosave(self):
-
-        if CONFIG_AUTOSAVE:
-            if hasattr(self, 'config'):
-                # Check if we have a 'config' attribute.
-                # If we don't have one, the configuration wasn't loaded,
-                # so don't save anything to avoid blowing up the
-                # configuration directory with empty configuration files.
-                self.config.save()
+        for key, val in f.iteritems():
+            for cls in val:
+                self._features.append(cls(self))

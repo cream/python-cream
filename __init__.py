@@ -20,8 +20,6 @@ from cream.util import cached_property
 
 from .base import Component
 
-CONFIG_AUTOSAVE = True
-
 class Module(Component):
     """ Baseclass for all modules... """
 
@@ -49,6 +47,7 @@ class Module(Component):
 
 
     def quit(self):
-        self._autosave()
+        for f in self._features:
+            f.__finalize__()
         self._mainloop.quit()
 
