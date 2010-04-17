@@ -43,7 +43,7 @@ class Component(object):
 
         for feature in features:
             try:
-                f = FEATURES[feature](self)
+                FEATURES[feature](self)
             except KeyError:
                 raise NoSuchFeature()
 

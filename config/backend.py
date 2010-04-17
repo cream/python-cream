@@ -1,14 +1,13 @@
 import os
 
-from lxml.etree import parse as parse_xml
+from lxml.etree import XMLSyntaxError, parse as parse_xml
+from cream.util.string import slugify
 
+from gpyconf.backends import Backend
+from gpyconf.backends._xml.xmlserialize import unserialize_file, unserialize_atomic, serialize_to_file
 import gpyconf.fields
 import gpyconf.contrib.gtk
 import cream.config.fields
-from gpyconf.backends import Backend
-from gpyconf.backends._xml.xmlserialize import unserialize_file, unserialize_atomic, serialize_to_file
-from lxml.etree import XMLSyntaxError
-from cream.util.string import slugify
 
 FIELD_TYPE_MAP = {
     'char' : 'str',
@@ -53,12 +52,13 @@ class CreamXMLBackend(dict, Backend):
         self.configuration_dir = os.path.join(self.directory,
                                               CONFIGURATION_DIRECTORY)
 
-    @staticmethod
-    def configuration_file_exists(directory):
-        return os.path.isfile(os.path.join(directory, CONFIGURATION_SCHEME_FILE))
-
     def read_scheme(self):
-        tree = parse_xml(os.path.join(self.directory, CONFIGURATION_SCHEME_FILE))
+        conf_file = os.path.join(self.directory, CONFIGURATION_SCHEME_FILE)
+        if not os.path.isfile(conf_file):
+            from . import MissingConfigurationDefinitionFile
+            raise MissingConfigurationDefinitionFile("Could not find %s." % conf_file)
+
+        tree = parse_xml(conf_file)
         root = tree.getroot()
         scheme = {}
 
