@@ -128,3 +128,51 @@ class Manifest(dict):
 
     def __str__(self):
         return "<Manifest '{0}'>".format(self._path)
+
+
+class ManifestDB(object):
+
+    def __init__(self, path, type=None):
+
+        self.path = path
+        self.type = type
+
+        self.by_name = {}
+        self.by_id = {}
+
+        self.scan()
+
+
+    def scan(self):
+
+        res = self._scan(self.path, self.type)
+
+        for i in res:
+            self.by_name[i['name']] = i
+            self.by_id[i['id']] = i
+
+
+    def get_by_name(self, name):
+        return self.by_name[name]
+
+
+    def get_by_id(self, id):
+        return self.by_id[id]
+
+
+    def _scan(self, path, type=None):
+
+        path = os.path.abspath(path)
+        files = os.listdir(path)
+        res = []
+
+        for file in files:
+            if os.path.isdir(os.path.join(path, file)):
+                res.extend(self._scan(os.path.join(path, file), type))
+            else:
+                if file == 'manifest.xml':
+                    m = Manifest(os.path.join(path, file))
+                    if not type or m['type'] == type:
+                        res.append(m)
+
+        return res
