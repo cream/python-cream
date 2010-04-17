@@ -156,6 +156,9 @@ class Configuration(_Configuration):
             field.field_var = name
             self.fields[name] = field
 
+    def get_additional_fields(self):
+        return {}
+
     def read(self):
         predefined_profiles = self.profiles
 
