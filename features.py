@@ -7,6 +7,15 @@ class NoSuchFeature(BaseException):
     pass
 
 
+class ConfigurationFeature(object):
+
+    def __init__(self, component):
+
+        from .config import Configuration
+        component.config = Configuration.fromxml(component.context.wd)
+        component.config_loaded = True
+
+
 class HotkeyFeature(gobject.GObject):
 
     __gtype_name__ = 'HotkeyFeature'
@@ -47,5 +56,6 @@ class HotkeyFeature(gobject.GObject):
 
 
 FEATURES.update({
-    'hotkeys': HotkeyFeature,
+    'org.cream.hotkeys': HotkeyFeature,
+    'org.cream.config': HotkeyFeature,
     })

@@ -20,15 +20,26 @@ import os
 
 from cream.util import cached_property, get_source_file
 
-from .meta import MetaData
+from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
 
 CONFIG_AUTOSAVE = True
 
+class Context(object):
+
+    def __init__(self, path):
+
+        self.path = path
+
+        self.environ = os.environ
+        self.wd = os.path.dirname(self.path)
+        self.manifest = Manifest(self.path)
+
+
 class Component(object):
     """ Baseclass for e. g. cream.Module and cream.extensions.Extension. """
 
-    __meta__ = 'meta.xml'
+    __manifest__ = 'manifest.xml'
     config_loaded = False
 
     def __init__(self, features=[]):
@@ -38,14 +49,14 @@ class Component(object):
         base_path = os.path.dirname(sourcefile)
         os.chdir(base_path)
 
-        self.__meta__ = os.path.join(base_path, self.__meta__)
-        self.meta = MetaData(self.__meta__)
+        self.__manifest__ = os.path.join(base_path, self.__manifest__)
+        self.context = Context(self.__manifest__)
 
-        for feature in features:
+        for feature in self.context.manifest['features']:
             try:
                 f = FEATURES[feature](self)
             except KeyError:
-                raise NoSuchFeature()
+                raise NoSuchFeature, "Could not load feature '{0}'!".format(feature)
 
 
     def __getattr__(self, attr):
@@ -59,7 +70,7 @@ class Component(object):
     def _load_config(self, base_path=None):
 
         from .config import Configuration
-        self.config = Configuration.fromxml(base_path or self.meta['path'])
+        self.config = Configuration.fromxml(base_path or self.context.wd)
         self.config_loaded = True
 
 
