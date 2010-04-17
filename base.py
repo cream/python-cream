@@ -43,20 +43,25 @@ class Component(object):
     __manifest__ = 'manifest.xml'
     config_loaded = False
 
-    def __init__(self, features=[]):
+    def __init__(self, path=None, features=[]):
 
-        sourcefile = os.path.abspath(get_source_file(self.__class__))
-
-        base_path = os.path.dirname(sourcefile)
-        os.chdir(base_path)
+        if path:
+            self.__manifest__ = path
+        else:
+            sourcefile = os.path.abspath(get_source_file(self.__class__))
+            base_path = os.path.dirname(sourcefile)
+            self.__manifest__ = os.path.join(base_path, self.__manifest__)
 
         # Create context and load manifest file...
-        self.__manifest__ = os.path.join(base_path, self.__manifest__)
         self.context = Context(self.__manifest__)
+
+        os.chdir(self.context.wd)
 
         # Load required features...
         f = {}
         self._features = []
+
+        self.context.manifest['features'] += features
 
         for feature in self.context.manifest['features']:
             try:
