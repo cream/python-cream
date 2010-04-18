@@ -34,10 +34,9 @@ class Module(Component):
         self._mainloop = gobject.MainLoop()
         try:
             self._mainloop.run()
-        except (SystemError, KeyboardInterrupt), e:
+        except (SystemError, KeyboardInterrupt):
             # shut down gracefully.
             self.quit()
-            raise e
 
 
     @cached_property

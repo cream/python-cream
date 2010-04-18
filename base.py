@@ -24,8 +24,6 @@ from cream.util import cached_property, get_source_file
 from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
 
-CONFIG_AUTOSAVE = True
-
 class Context(object):
 
     def __init__(self, path):
@@ -33,7 +31,7 @@ class Context(object):
         self.path = path
 
         self.environ = os.environ
-        self.wd = os.path.dirname(self.path)
+        self.working_directory = os.path.dirname(self.path)
         self.manifest = Manifest(self.path)
 
 
@@ -41,9 +39,8 @@ class Component(object):
     """ Baseclass for e. g. cream.Module and cream.extensions.Extension. """
 
     __manifest__ = 'manifest.xml'
-    config_loaded = False
 
-    def __init__(self, path=None, features=[]):
+    def __init__(self, path=None, features=None):
 
         if path:
             self.__manifest__ = path
@@ -55,23 +52,24 @@ class Component(object):
         # Create context and load manifest file...
         self.context = Context(self.__manifest__)
 
-        os.chdir(self.context.wd)
+        os.chdir(self.context.working_directory)
 
         # Load required features...
-        f = {}
-        self._features = []
+        self._features = list()
+        self._loaded_features = dict()
+        # dict is the fastest for "do you have X" lookup, which runs in O(1)
 
-        self.context.manifest['features'] += features
+        if features:
+            self.context.manifest['features'].extend(features)
 
-        for feature in self.context.manifest['features']:
+        for feature_name in self.context.manifest['features']:
             try:
-                cls, priority = FEATURES[feature]
-                if not f.has_key(priority):
-                    f[priority] = []
-                f[priority].append(cls)
+                feature_class = FEATURES[feature_name]
             except KeyError:
-                raise NoSuchFeature, "Could not load feature '{0}'!".format(feature)
+                raise NoSuchFeature("Could not load feature '{0}'!".format(feature_name))
+            else:
+                self.load_feature(feature_class)
 
-        for key, val in f.iteritems():
-            for cls in val:
-                self._features.append(cls(self))
+    def load_feature(self, feature_class):
+        self._features.append(feature_class(self))
+        self._loaded_features[feature_class] = None # just some dummy value
