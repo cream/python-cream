@@ -71,5 +71,6 @@ class Component(object):
                 self.load_feature(feature_class)
 
     def load_feature(self, feature_class):
-        self._features.append(feature_class(self))
-        self._loaded_features[feature_class] = None # just some dummy value
+        if feature_class not in self._loaded_features:
+            self._features.append(feature_class(self))
+            self._loaded_features[feature_class] = None # just some dummy value

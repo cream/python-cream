@@ -7,20 +7,27 @@ FEATURES = dict()
 class NoSuchFeature(BaseException):
     pass
 
+class _Feature(object):
+    """
+    Special superclass for `Feature` that throws away the `component`
+    parameter in `__new__` to avoid Python errors.
+    """
+    def __new__(cls, component):
+        return super(_Feature, cls).__new__(cls)
 
-class Feature(object):
+class Feature(_Feature):
+    """ "Feature" that can be "mixed" into Cream components. """
     dependencies = None
-
-    def __finalize__(self):
-        pass
 
     def __new__(cls, component):
         """ Make sure all dependencies for this feature are loaded. """
         if cls.dependencies:
             for dependency in cls.dependencies:
-                if dependency not in component._loaded_features:
-                    component.load_feature(dependency)
+                component.load_feature(dependency)
         return super(Feature, cls).__new__(cls, component)
+
+    def __finalize__(self):
+        pass
 
 
 class ConfigurationFeature(Feature):
