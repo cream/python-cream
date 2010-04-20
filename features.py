@@ -41,6 +41,8 @@ class ConfigurationFeature(Feature):
         component.config = Configuration(component.context.working_directory)
         self.config = component.config
 
+        component.config.read()
+
         self.autosave = True
 
 
