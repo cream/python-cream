@@ -142,18 +142,16 @@ class Configuration(_Configuration):
         # TODO: There has to be a better way.
         self.fields = self.fields.copy()
 
-        _Configuration.__init__(self,
-            read=False,
-            backend_instance=CreamXMLBackend(path),
-            **kwargs
-        )
+        backend = CreamXMLBackend(path)
 
         try:
-            configuration_scheme = self.backend_instance.read_scheme()
+            configuration_scheme = backend.read_scheme()
             for name, field in configuration_scheme.iteritems():
                 self._add_field(name, field)
         except MissingConfigurationDefinitionFile:
             pass
+
+        _Configuration.__init__(self, backend_instance=backend, **kwargs)
 
 
     def _add_field(self, name, field):
@@ -161,7 +159,10 @@ class Configuration(_Configuration):
         self.fields[name] = field
 
     def read(self):
-        predefined_profiles = self.profiles
+        if not self.initially_read:
+            predefined_profiles = self.profiles
+        else:
+            predefined_profiles = ()
 
         self.profiles = ProfileList(DefaultProfile(self.fields.name_value_dict)) # TODO: remove static options
 
