@@ -38,7 +38,7 @@ class ConfigurationFeature(Feature):
 
         from .config import Configuration
 
-        component.config = Configuration.fromxml(component.context.working_directory)
+        component.config = Configuration(component.context.working_directory)
         self.config = component.config
 
         self.autosave = True
@@ -47,6 +47,7 @@ class ConfigurationFeature(Feature):
     def __finalize__(self):
 
         if self.autosave:
+            print "Autosaving...", [(n, f.value) for n, f in self.config.fields.iteritems()]
             self.config.save()
 
 

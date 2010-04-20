@@ -4,7 +4,7 @@ from gpyconf import Configuration as _Configuration
 from gpyconf.fields import Field
 
 from .backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
-from cream.util import flatten
+from cream.util import flatten, cached_property
 
 class MissingConfigurationDefinitionFile(Exception):
     """
@@ -129,35 +129,36 @@ class Configuration(_Configuration):
     profiles = ()
     _ingore_frontend = False
 
-    @property
+    @cached_property
     def frontend(self):
         from .frontend import CreamFrontend
         return CreamFrontend
 
-    def __init__(self, **kwargs):
-        super(Configuration, self).__init__(read=False, **kwargs)
 
-    @classmethod
-    def fromxml(cls, directory='.', classname=None):
-        backend = CreamXMLBackend(directory)
+    def __init__(self, path, **kwargs):
+        # Make sure this instance's `fields` dict is *not* the classes'
+        # `fields` dict (hence, the `fields` attribute of class `cls`),
+        # but a copy of it.
+        # TODO: There has to be a better way.
+        self.fields = self.fields.copy()
+
+        _Configuration.__init__(self,
+            read=False,
+            backend_instance=CreamXMLBackend(path),
+            **kwargs
+        )
+
         try:
-            configuration_scheme = backend.read_scheme()
+            configuration_scheme = self.backend_instance.read_scheme()
+            for name, field in configuration_scheme.iteritems():
+                self._add_field(name, field)
         except MissingConfigurationDefinitionFile:
-            configuration_scheme = dict()
+            pass
 
-        configuration = cls(backend_instance=backend)
-        configuration._add_fields(configuration_scheme)
-        configuration._add_fields(configuration.get_additional_fields())
-        configuration.read()
-        return configuration
 
-    def _add_fields(self, dct):
-        for name, field in dct.iteritems():
-            field.field_var = name
-            self.fields[name] = field
-
-    def get_additional_fields(self):
-        return {}
+    def _add_field(self, name, field):
+        field.field_var = name
+        self.fields[name] = field
 
     def read(self):
         predefined_profiles = self.profiles
