@@ -1,6 +1,13 @@
+import gobject
 import gtk
 import cairo
 import time
+import math
+
+CURVE_LINEAR = lambda x: x
+CURVE_SINE = lambda x: math.sin(math.pi / 2 * x)
+
+FRAMERATE = 30.0
 
 class CompositeBin(gtk.Fixed):
     """ A subclass of `GtkFixed` enabling composition of child widgets to the parent widget. """
@@ -27,7 +34,8 @@ class CompositeBin(gtk.Fixed):
         ctx.rectangle(*event.area)
 
         for child in self.children:
-            alloc = child.allocation
+            alloc = child.get_allocation()
+            ctx.move_to(alloc.x, alloc.y)
             ctx.set_source_pixmap(child.window, alloc.x, alloc.y)
             ctx.paint()
         return False
@@ -48,7 +56,7 @@ class CompositeBin(gtk.Fixed):
     def remove(self, child):
 
         gtk.Fixed.remove(self, child)
-        child.realize()
+        self.children.remove(child)
 
 
     def child_realize_cb(self, widget):
@@ -56,3 +64,39 @@ class CompositeBin(gtk.Fixed):
             widget.window.set_composited(True)
         except:
             pass
+
+
+class Timeline(gobject.GObject):
+
+    __gtype_name__ = 'Timeline'
+    __gsignals__ = {
+        'update': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_FLOAT,))
+        }
+
+    def __init__(self, duration, curve):
+
+        gobject.GObject.__init__(self)
+
+        self.duration = duration
+        self.curve = curve
+
+        self._states = []
+
+
+    def run(self):
+
+        n_frames = (self.duration / 1000.0) * FRAMERATE
+
+        while len(self._states) <= n_frames:
+            self._states.append(self.curve(len(self._states) * (1.0 / n_frames)))
+        self._states.reverse()
+
+        gobject.timeout_add(int(self.duration / FRAMERATE), self.update)
+
+
+    def update(self):
+
+        self.emit('update', self._states.pop())
+        if len(self._states) == 0:
+            return False
+        return True
