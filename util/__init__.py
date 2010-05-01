@@ -14,6 +14,12 @@ def joindir(_file, *parts):
     import os
     return os.path.join(os.path.dirname(os.path.abspath(_file)), *parts)
 
+def walkfiles(*args, **kwargs):
+    import os
+    for directory, directories, files in os.walk(*args, **kwargs):
+        for file_ in files:
+            yield os.path.join(directory, file_)
+
 def urljoin_multi(*parts):
     """
     Joins multiple strings into an url using a slash ('/'). Example::
