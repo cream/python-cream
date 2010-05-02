@@ -1,6 +1,8 @@
-from gpyconf.fields import FontField as _FontField
+from gpyconf.fields import FontField as _FontField, MultiOptionField
 from gpyconf.frontends.gtk import font_description_to_dict, dict_to_font_description
 
+
+MultioptionField = MultiOptionField
 
 class FontDict(dict):
     def to_string(self):

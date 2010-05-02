@@ -15,7 +15,8 @@ FIELD_TYPE_MAP = {
     'font' : 'str',
     'integer' : 'int',
     'hotkey' : 'str',
-    'boolean' : 'bool'
+    'boolean' : 'bool',
+    'multioption' : 'tuple'
 }
 
 
@@ -66,7 +67,11 @@ class CreamXMLBackend(dict, Backend):
             option_name = child.tag
             attributes = dict(child.attrib)
             option_type = attributes.pop('type')
-            attributes['default'] = unserialize_atomic(child, FIELD_TYPE_MAP)
+            if option_type.startswith('multioption'):
+                # TODO: Hrm
+                attributes['options'] = unserialize_atomic(child, FIELD_TYPE_MAP)
+            else:
+                attributes['default'] = unserialize_atomic(child, FIELD_TYPE_MAP)
             scheme[option_name] = get_field(option_type)(**attributes)
 
         return scheme
