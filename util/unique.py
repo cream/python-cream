@@ -7,6 +7,9 @@
         Server accepts request.
         Client sends `ping` message.
         Server responds with `pong` message.
+        Client sends `notify` message.
+        Server responds with `kthxbai` message.
+        Client responds with `cu` message and dies.
 """
 
 import sys
@@ -24,8 +27,35 @@ SOCKET_TEMPLATE = 'var/run/cream/%s.sock'
 PONG_TIMEOUT = 1000 # TODO
 
 class UniqueApplication(gobject.GObject):
+    def __init__(self, ident):
+        gobject.GObject.__init__(self)
+        self._ident = ident
+        self._setup_unique()
+
+    def _setup_unique(self):
+        self._unique_manager = UniqueManager.get(self, self._ident)
+        self._unique_manager.run() # TODO
+
+    def _replace_server(self):
+        """
+            I was a client before, but now I am a server. YAY!
+        """
+        self._unique_manager.quit()
+        self._setup_unique()
+
+    def quit(self):
+        self._unique_manager.quit()
+        print 'Yeah, I\'m dead.'
+
+gobject.type_register(UniqueApplication)
+gobject.signal_new('already-running', UniqueApplication, gobject.SIGNAL_RUN_LAST, \
+                   gobject.TYPE_PYOBJECT, ())
+gobject.signal_new('start-attempt', UniqueApplication, gobject.SIGNAL_RUN_LAST, \
+                   gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+
+class UniqueManager(object):
     @classmethod
-    def get(cls, ident):
+    def get(cls, app, ident):
         """
             :param ident: A string to identify an application. Should be unique system-wide.
         """
@@ -33,14 +63,15 @@ class UniqueApplication(gobject.GObject):
         if os.path.exists(socket_path):
             # This application is already running. I'm a client.
             print '--- client'
-            return UniqueApplicationClient(ident)
+            return UniqueManagerClient(app, ident)
         else:
             # I'm the server.
             print '--- server'
-            return UniqueApplicationServer(ident)
+            return UniqueManagerServer(app, ident)
 
-    def __init__(self, ident):
-        gobject.GObject.__init__(self)
+    def __init__(self, app, ident):
+        self.sources = set()
+        self.app = app
         self.ident = ident
         self.socket = None
         self.socket_path = SOCKET_TEMPLATE % ident
@@ -49,12 +80,13 @@ class UniqueApplication(gobject.GObject):
         raise NotImplementedError()
 
     def quit(self):
-        if os.path.exists(self.socket_path):
-            os.remove(self.socket_path)
-
-gobject.type_register(UniqueApplication)
-gobject.signal_new('already-running', UniqueApplication, gobject.SIGNAL_RUN_LAST, \
-                   gobject.TYPE_PYOBJECT, ())
+        try:
+            self.socket.close()
+        except socket.error:
+            pass
+        # remove all glib sources
+        for source in self.sources:
+            glib.source_remove(source)
 
 def build_message(type, node=None):
     """
@@ -72,6 +104,7 @@ def serialize_message(type, obj):
 class States(object):
     NONE = 'none'
     HANDSHAKE_DONE = 'handshake done'
+    DONE = 'done'
 
 class UniqueError(Exception):
     pass
@@ -84,7 +117,6 @@ class Handler(object):
         raise NotImplementedError()
 
     def handle_message(self, message):
-        print message
         # It's XML, parse it.
         node = etree.fromstring(message)
         self.handle(node)
@@ -110,8 +142,9 @@ class Handler(object):
             self.handle_message(message)
 
 class Client(Handler):
-    def __init__(self, conn):
+    def __init__(self, manager, conn):
         Handler.__init__(self)
+        self.manager = manager
         self.conn = conn
         self.state = States.NONE
         self.buffer = ''
@@ -127,7 +160,17 @@ class Client(Handler):
         self.expect_type(node, 'notify')
         # get the data.
         data = unserialize(node[0])
-        print 'got data: %r' % (data,)
+        # emit the signal.
+        self.manager.app.emit('start-attempt', data)
+        # send the message.
+        self.send_message('kthxbai')
+        self.state = States.DONE
+
+    def handle_argh(self, node):
+        self.expect_type(node, 'cu')
+        # self-destruct.
+        self.conn.close()
+        self.manager.remove_client(self)
 
     def expect_type(self, node, type):
         if node.attrib.get('type') != type:
@@ -137,6 +180,7 @@ class Client(Handler):
         {
             States.NONE: self.handle_ping,
             States.HANDSHAKE_DONE: self.handle_notify,
+            States.DONE: self.handle_argh,
         }[self.state](node)
 
     def send(self, text):
@@ -148,10 +192,15 @@ class Client(Handler):
     def send_message(self, type, node=None):
         self.send(build_message(type, node))
 
-class UniqueApplicationServer(UniqueApplication):
-    def __init__(self, ident):
-        UniqueApplication.__init__(self, ident)
+class UniqueManagerServer(UniqueManager):
+    def __init__(self, app, ident):
+        UniqueManager.__init__(self, app, ident)
         self.clients = {} # { conn: client }
+
+    def quit(self):
+        UniqueManager.quit(self)
+        if os.path.exists(self.socket_path):
+            os.remove(self.socket_path)
 
     def run(self):
         # Create a UNIX socket
@@ -161,9 +210,9 @@ class UniqueApplicationServer(UniqueApplication):
         # Doit!
         self.socket.listen(1)
         # Connect IO callbacks
-        glib.io_add_watch(self.socket,
+        self.sources.add(glib.io_add_watch(self.socket,
                              glib.IO_IN,
-                             self._listen_callback)
+                             self._listen_callback))
 
     def _listen_callback(self, source, condition):
         print 'Yay listening.'
@@ -171,12 +220,12 @@ class UniqueApplicationServer(UniqueApplication):
         conn.setblocking(False)
         print 'Gotcha:', conn, addr
         # add the client
-        client = Client(conn)
+        client = Client(self, conn)
         self.add_client(client)
         # I want to get the data.
-        glib.io_add_watch(conn,
+        self.sources.add(glib.io_add_watch(conn,
                         glib.IO_IN | glib.IO_HUP,
-                        self._data_callback)
+                        self._data_callback))
         return True
 
     def add_client(self, client):
@@ -201,9 +250,9 @@ class UniqueApplicationServer(UniqueApplication):
             client.handle_data()
             return True
 
-class UniqueApplicationClient(UniqueApplication, Handler):
-    def __init__(self, ident):
-        UniqueApplication.__init__(self, ident)
+class UniqueManagerClient(UniqueManager, Handler):
+    def __init__(self, app, ident):
+        UniqueManager.__init__(self, app, ident)
         Handler.__init__(self)
         self.handshake_done = False
 
@@ -241,12 +290,14 @@ class UniqueApplicationClient(UniqueApplication, Handler):
         """
             For some reason, the server is offline. Replace it.
         """
-        print 'OMG REPLACE'
-        # TODO
+        # Kill the socket. :S
+        if os.path.exists(self.socket_path):
+            os.remove(self.socket_path)
+        # Make my master replace me. :(
+        self.app._replace_server()
 
     def already_running(self):
-        result = self.emit('already-running')
-        print 'RESULT IS %r' % (result,)
+        result = self.app.emit('already-running')
         # serialize result, send notify message
         self.send_serialized_message('notify', result)
 
@@ -256,9 +307,9 @@ class UniqueApplicationClient(UniqueApplication, Handler):
         self.socket.setblocking(False)
         self.socket.connect(self.socket_path)
         # Connect IO callbacks
-        glib.io_add_watch(self.socket,
+        self.sources.add(glib.io_add_watch(self.socket,
                              glib.IO_IN,
-                             self._data_callback)
+                             self._data_callback))
         # Send ping message.
         self.send_ping()
 
@@ -269,8 +320,15 @@ class UniqueApplicationClient(UniqueApplication, Handler):
     def handle(self, node):
         {
             'pong': self.handle_pong,
+            'kthxbai': self.handle_kthxbai,
         }[node.attrib['type']](node)
 
     def handle_pong(self, node):
         # handshake done!
         self.handshake_done = True
+
+    def handle_kthxbai(self, node):
+        # Server got our information, we can die now.
+        self.send_message('cu')
+        self.app.quit()
+
