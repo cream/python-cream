@@ -18,7 +18,7 @@ from lxml import etree
 import gobject
 import glib
 
-import gpyconf.backends._xml.xmlserialize as xmlserialize
+from gpyconf.backends._xml.xmlserialize.xmlserialize import serialize, unserialize
 
 SOCKET_TEMPLATE = 'var/run/cream/%s.sock'
 PONG_TIMEOUT = 1000 # TODO
@@ -67,7 +67,7 @@ def build_message(type, node=None):
     return etree.tostring(msg)
 
 def serialize_message(type, obj):
-    return build_message(type, xmlserialize.serialize(obj, return_string=False))
+    return build_message(type, serialize(obj, return_string=False))
 
 class States(object):
     NONE = 'none'
@@ -84,6 +84,7 @@ class Handler(object):
         raise NotImplementedError()
 
     def handle_message(self, message):
+        print message
         # It's XML, parse it.
         node = etree.fromstring(message)
         self.handle(node)
@@ -119,6 +120,14 @@ class Client(Handler):
         self.expect_type(node, 'ping')
         # send a `pong` message.
         self.send_message('pong')
+        # and set the new state.
+        self.state = States.HANDSHAKE_DONE
+
+    def handle_notify(self, node):
+        self.expect_type(node, 'notify')
+        # get the data.
+        data = unserialize(node[0])
+        print 'got data: %r' % (data,)
 
     def expect_type(self, node, type):
         if node.attrib.get('type') != type:
@@ -127,6 +136,7 @@ class Client(Handler):
     def handle(self, node):
         {
             States.NONE: self.handle_ping,
+            States.HANDSHAKE_DONE: self.handle_notify,
         }[self.state](node)
 
     def send(self, text):
@@ -206,6 +216,9 @@ class UniqueApplicationClient(UniqueApplication, Handler):
     def send_message(self, type, node=None):
         self.send(build_message(type, node))
 
+    def send_serialized_message(self, type, obj):
+        self.send(serialize_message(type, obj))
+
     def send_ping(self):
         self.send_message('ping')
         # if we haven't received a pong in $PONG_TIMEOUT ms,
@@ -233,7 +246,9 @@ class UniqueApplicationClient(UniqueApplication, Handler):
 
     def already_running(self):
         result = self.emit('already-running')
-        print 'RESULT IS %r' % result
+        print 'RESULT IS %r' % (result,)
+        # serialize result, send notify message
+        self.send_serialized_message('notify', result)
 
     def run(self):
         # Create a UNIX socket
