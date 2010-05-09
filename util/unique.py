@@ -128,7 +128,10 @@ class Handler(object):
         # Read all available data.
         while True:
             try:
-                self.buffer += self.conn.recv(1024)
+                new = self.conn.recv(1024)
+                if not new:
+                    break
+                self.buffer += new
             except socket.error:
                 # TODO: ouch?
                 break
@@ -148,6 +151,7 @@ class Client(Handler):
         self.conn = conn
         self.state = States.NONE
         self.buffer = ''
+        self.sources = set()
 
     def handle_ping(self, node):
         self.expect_type(node, 'ping')
@@ -155,6 +159,10 @@ class Client(Handler):
         self.send_message('pong')
         # and set the new state.
         self.state = States.HANDSHAKE_DONE
+
+    def remove(self):
+        for source in self.sources:
+            glib.source_remove(source)
 
     def handle_notify(self, node):
         self.expect_type(node, 'notify')
@@ -225,7 +233,7 @@ class UniqueManagerServer(UniqueManager):
         client = Client(self, conn)
         self.add_client(client)
         # I want to get the data.
-        self.sources.add(glib.io_add_watch(conn,
+        client.sources.add(glib.io_add_watch(conn,
                         glib.IO_IN | glib.IO_HUP,
                         self._data_callback))
         return True
@@ -235,6 +243,7 @@ class UniqueManagerServer(UniqueManager):
         print 'Added client %r ...' % client
 
     def remove_client(self, client):
+        client.remove()
         del self.clients[client.conn]
         print 'Removed client %r ...' % client
 
