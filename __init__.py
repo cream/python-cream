@@ -17,11 +17,18 @@
 # MA 02110-1301, USA.
 
 from cream.util import cached_property
+from cream.util import unique
 
 from .base import Component
 
-class Module(Component):
+class Module(Component, unique.UniqueApplication):
     """ Baseclass for all modules... """
+
+    def __init__(self):
+
+        Component.__init__(self)
+        unique.UniqueApplication.__init__(self, self.context.manifest['id'])
+
 
     def main(self, enable_threads=True):
         """ Run a GLib-mainloop. """
@@ -46,6 +53,8 @@ class Module(Component):
 
 
     def quit(self):
+        unique.UniqueApplication.quit(self)
+        print "QUIT!"
         for f in self._features:
             f.__finalize__()
         self._mainloop.quit()
