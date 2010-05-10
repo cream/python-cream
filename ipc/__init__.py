@@ -1,5 +1,7 @@
 from types import FunctionType
 
+import gobject
+
 import dbus
 import dbus.proxies
 import dbus.service
@@ -37,7 +39,7 @@ def get_object(modname, path=None, interface=None, bus=SESSION_BUS):
 #class IpcError(Exception):
  #   pass
 
-class ObjectMeta(dbus.service.InterfaceType):
+class ObjectMeta(dbus.service.InterfaceType, gobject.GObjectMeta):
 
     def __new__(mcs, name, bases, dct):
 
@@ -71,7 +73,9 @@ class ObjectMeta(dbus.service.InterfaceType):
 
         return cls
 
-class Object(dbus.service.Object):
+class Object(dbus.service.Object, gobject.GObject):
+
+    __gtype_name__ = 'Object'
     __metaclass__ = ObjectMeta
 
     @classmethod
