@@ -157,6 +157,7 @@ class Configuration(_Configuration):
     def _add_field(self, name, field):
         field.field_var = name
         self.fields[name] = field
+        field.connect('value-changed', self.on_field_value_changed)
 
     def read(self):
         if not self.initially_read:
