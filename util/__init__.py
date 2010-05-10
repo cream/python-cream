@@ -89,7 +89,9 @@ class cached_property(object):
             return self
         value = self.func(obj)
         if self.not_none and value is None:
-            return None
+            # TODO: Better error msg
+            raise AttributeError("Property '{name}' was declared to never be None "
+                                 "but the getter returned None")
         setattr(obj, self.__name__, value)
         return value
 
