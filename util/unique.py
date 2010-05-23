@@ -24,7 +24,7 @@ import glib
 from gpyconf.backends._xml.xmlserialize.xmlserialize import serialize, unserialize
 
 SOCKET_TEMPLATE = os.path.expanduser('~/.local/var/run/cream/%s.sock')
-PONG_TIMEOUT = 1000 # TODO
+PONG_TIMEOUT = 100 # = 100 ms.
 
 class UniqueApplication(gobject.GObject):
     def __init__(self, ident):
