@@ -24,7 +24,7 @@ import glib
 from gpyconf.backends._xml.xmlserialize.xmlserialize import serialize, unserialize
 
 SOCKET_TEMPLATE = os.path.expanduser('~/.local/var/run/cream/%s.sock')
-PONG_TIMEOUT = 1000 # TODO
+PONG_TIMEOUT = 100 # = 100 ms.
 
 class UniqueApplication(gobject.GObject):
     def __init__(self, ident):
@@ -318,7 +318,12 @@ class UniqueManagerClient(UniqueManager, Handler):
             os.makedirs(os.path.dirname(self.socket_path))
         self.socket = self.conn = socket.socket(socket.AF_UNIX) # Set `self.conn` to make `Handler` happy
         self.socket.setblocking(False)
-        self.socket.connect(self.socket_path)
+        try:
+            self.socket.connect(self.socket_path)
+        except socket.error:
+            # Socket error ... uhm, replace it!
+            self.replace_server()
+            return
         # Connect IO callbacks
         self.sources.add(glib.io_add_watch(self.socket,
                              glib.IO_IN,
