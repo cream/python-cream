@@ -70,7 +70,8 @@ class Timeline(gobject.GObject):
 
     __gtype_name__ = 'Timeline'
     __gsignals__ = {
-        'update': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_FLOAT,))
+        'update': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_FLOAT,)),
+        'completed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
     def __init__(self, duration, curve):
@@ -98,5 +99,6 @@ class Timeline(gobject.GObject):
 
         self.emit('update', self._states.pop())
         if len(self._states) == 0:
+            self.emit('completed')
             return False
         return True

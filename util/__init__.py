@@ -71,19 +71,30 @@ class cached_property(object):
     # if `not_none` is set, `cached_property` won't accept `None` as valid
     # `func` return value but will stay and wait for some non-`None` value.
 
-    def __init__(self, func, name=None, doc=None):
+    def __new__(cls, *args, **kwargs):
+        if not args:
+            from functools import partial
+            return partial(cls, *args, **kwargs)
+        else:
+            return super(cls, cls).__new__(cls)
+
+    def __init__(self, func, name=None, doc=None, not_none=False):
         self.func = func
         self.__name__ = name or func.__name__
         self.__doc__ = doc or func.__doc__
+        self.not_none = not_none
 
     def __get__(self, obj, type=None):
         if obj is None:
             return self
         value = self.func(obj)
         if self.not_none and value is None:
-            return None
+            # TODO: Better error msg
+            raise AttributeError("Property '%s' was declared to never be None "
+                                 "but the getter returned None" % self.__name__)
         setattr(obj, self.__name__, value)
         return value
+
 
 def random_hash(bits=100, hashfunction='sha256'):
     from random import getrandbits
