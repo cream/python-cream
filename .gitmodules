@@ -4,3 +4,6 @@
 [submodule "gui/widgets"]
 	path = gui/widgets
 	url = git://github.com/cream/gtkwidgets
+[submodule "contrib/appindicators"]
+	path = contrib/appindicators
+	url = git://github.com/cream/appindicators-contrib.git
