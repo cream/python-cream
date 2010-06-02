@@ -10,7 +10,7 @@ from dbus.lowlevel import SignalMessage
 import dbus.mainloop.glib
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-from . import hacks
+from . import hacks, properties
 from .tools import bus_name_to_path, path_to_bus_name
 
 class IpcProxyInterface(dbus.Interface):
@@ -146,6 +146,8 @@ class Object(dbus.service.Object, gobject.GObject):
         self._dbus_bus_name = dbus.service.BusName(bus_name, bus)
 
         dbus.service.Object.__init__(self, self._dbus_bus_name, path)
+        gobject.GObject.__init__(self)
+
         self._bus = bus
         self._bus_name = bus_name
         self._path = path

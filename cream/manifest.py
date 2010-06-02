@@ -57,6 +57,10 @@ class Manifest(dict):
             else:
                 return s
 
+        def expand_path(p):
+            if p:
+                return os.path.join(os.path.dirname(self._path), p)
+
         append_ns(root)
 
         component = root.find('component')
@@ -67,7 +71,7 @@ class Manifest(dict):
         self['type'] = expand_ns(component.get('type'))
         self['name'] = component.get('name')
         self['version'] = component.get('version')
-        self['entry'] = component.get('entry')
+        self['entry'] = expand_path(component.get('entry'))
 
         # Licenses:
         self['licenses'] = []
@@ -80,6 +84,27 @@ class Manifest(dict):
                 'version': l.get('version')
                 })
             remove_ns(l)
+
+        # Icons:
+        self['icons'] = {
+            'scalable': None
+            }
+
+        icons = component.findall('icon')
+        for i in icons:
+            append_ns(i)
+            self['icons'][i.get('size')] = expand_path(i.get('path'))
+            remove_ns(i)
+
+        # Descriptions:
+        self['descriptions'] = {
+            }
+
+        descriptions = component.findall('description')
+        for d in descriptions:
+            append_ns(d)
+            self['descriptions'][d.get('lang')] = d.get('content')
+            remove_ns(d)
 
         # Authors:
         self['authors'] = []
@@ -124,6 +149,33 @@ class Manifest(dict):
             append_ns(c)
             self['provided-components'].append(expand_ns(c.get('type')))
             remove_ns(c)
+
+
+        # Package information:
+        package = root.find('package')
+        if package is None:
+            return
+
+        self['package'] = {}
+
+        if package.get('auto') == 'true':
+            self['package']['auto'] = True
+        else:
+            self['package']['auto'] = False
+
+        self['package']['rules'] = {
+            'ignore': [],
+            'application': [],
+            'desktop': [],
+            'icon': [],
+            'library': [],
+            }
+
+        rules = package.findall('rule')
+        for r in rules:
+            type = r.get('type')
+            files = r.get('files')
+            self['package']['rules'][type].append(files)
 
 
     def __str__(self):
