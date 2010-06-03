@@ -106,6 +106,8 @@ class Manifest(dict):
             self['descriptions'][d.get('lang')] = d.get('content')
             remove_ns(d)
 
+        self['description'] = self['descriptions'].get('en') or ''
+
         # Authors:
         self['authors'] = []
 
