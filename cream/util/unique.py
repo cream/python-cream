@@ -21,7 +21,7 @@ from lxml import etree
 import gobject
 import glib
 
-from gpyconf.backends._xml.xmlserialize.xmlserialize import serialize, unserialize
+from xmlserialize import serialize, unserialize
 
 SOCKET_TEMPLATE = os.path.expanduser('~/.local/var/run/cream/%s.sock')
 PONG_TIMEOUT = 100 # = 100 ms.
