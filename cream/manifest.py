@@ -34,6 +34,8 @@ class Manifest(dict):
         self._path = path
         self._tree = parse_xml_file(self._path)
 
+        self['path'] = os.path.dirname(os.path.abspath(path))
+
         root = self._tree.getroot()
         if root.tag != 'manifest':
             raise ManifestException("Manifest root tag has to 'manifest'")

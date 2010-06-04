@@ -1,9 +1,10 @@
 import os
 import sys
 import inspect
+import imp
 
 from . import Component
-from .meta import MetaDataDB
+from .manifest import ManifestDB
 
 META_TYPE_EXTENSION = 'Cream Extension'
 
@@ -44,33 +45,27 @@ class ExtensionManager(object):
 
 
     def load_all(self, interface=None):
-        map(lambda ext: self._load(ext, interface),
-            self.extensions.itervalues()
-        )
+        return map(lambda ext: self._load(ext, interface),
+                   self.extensions.by_name.itervalues())
 
     def load_by_name(self, name, interface=None):
 
         ext = self.extensions.get_by_name(name)
-        self._load(ext, interface)
+        return self._load(ext, interface)
 
 
     def load_by_hash(self, hash, interface=None):
 
         ext = self.extensions.get_by_hash(hash)
-        self._load(ext, interface)
+        return self._load(ext, interface)
 
 
     def _load(self, extension, interface=None):
-        import imp
-
-        module_name = os.path.splitext(os.path.basename(extension['file']))[0]
+        # '/foo/bar/extensions/myext.py' --> 'myext'
+        module_name = os.path.splitext(os.path.basename(extension['entry']))[0]
         module_path = extension['path']
 
-        os.chdir(module_path)
-
-        # Backing up original search path and inserting path of extension.
-        _path = sys.path
-        sys.path.insert(0, module_path)
+        sys.path.append(module_path)
 
         # Importing the extension as a python module.
         file, pathname, description = imp.find_module(module_name, [module_path])
@@ -78,10 +73,11 @@ class ExtensionManager(object):
 
         # Getting and instantiating the extension class.
         cls = getattr(mod, EXTENSIONS[os.path.join(module_path, module_name + '.py')].__name__)
-        cls(interface or self.interface)
+        instance = cls(interface or self.interface)
 
-        # Restoring original search path.
-        sys.path = _path
+        sys.path.remove(module_path)
+
+        return instance
 
 
 class ExtensionInterface(object):
