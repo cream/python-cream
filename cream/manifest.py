@@ -35,8 +35,8 @@ class Manifest(dict):
         self._tree = parse_xml_file(self._path)
 
         root = self._tree.getroot()
-        if not root.tag == 'manifest':
-            raise ManifestException
+        if root.tag != 'manifest':
+            raise ManifestException("Manifest root tag has to 'manifest'")
 
         namespaces = []
 
@@ -61,6 +61,9 @@ class Manifest(dict):
             if p:
                 return os.path.join(os.path.dirname(self._path), p)
 
+        # TODO: Use a bottom-down iteration here and lookup node handlers
+        # from a dict or so. Much faster!
+
         append_ns(root)
 
         component = root.find('component')
@@ -77,34 +80,33 @@ class Manifest(dict):
         self['licenses'] = []
 
         licenses = component.findall('license')
-        for l in licenses:
-            append_ns(l)
+        for license in licenses:
+            append_ns(license)
             self['licenses'].append({
-                'title': l.get('title'),
-                'version': l.get('version')
-                })
-            remove_ns(l)
+                'title'   : license.get('title'),
+                'version' : license.get('version')
+            })
+            remove_ns(license)
 
         # Icons:
         self['icons'] = {
             'scalable': None
-            }
+        }
 
         icons = component.findall('icon')
-        for i in icons:
-            append_ns(i)
-            self['icons'][i.get('size')] = expand_path(i.get('path'))
-            remove_ns(i)
+        for icon in icons:
+            append_ns(icon)
+            self['icons'][icon.get('size')] = expand_path(icon.get('path'))
+            remove_ns(icon)
 
         # Descriptions:
-        self['descriptions'] = {
-            }
+        self['descriptions'] = {}
 
         descriptions = component.findall('description')
-        for d in descriptions:
-            append_ns(d)
-            self['descriptions'][d.get('lang')] = d.get('content')
-            remove_ns(d)
+        for descr in descriptions:
+            append_ns(descr)
+            self['descriptions'][descr.get('lang')] = descr.get('content')
+            remove_ns(descr)
 
         self['description'] = self['descriptions'].get('en') or ''
 
@@ -112,45 +114,47 @@ class Manifest(dict):
         self['authors'] = []
 
         authors = component.findall('author')
-        for a in authors:
-            append_ns(a)
+        for author in authors:
+            append_ns(author)
             self['authors'].append({
-                'name': a.get('name'),
-                'type': a.get('type'),
-                'mail': a.get('mail')
+                'name': author.get('name'),
+                'type': author.get('type'),
+                'mail': author.get('mail')
                 })
-            remove_ns(a)
+            remove_ns(author)
 
         # Features:
         self['features'] = []
 
         features = component.findall('use-feature')
-        for f in features:
-            append_ns(f)
-            self['features'].append(expand_ns(f.get('id')))
-            remove_ns(f)
+        for feature in features:
+            append_ns(feature)
+            self['features'].append(
+                (expand_ns(feature.attrib.pop('id')), feature.attrib)
+            )
+            remove_ns(feature)
 
         # Dependencies:
         self['dependencies'] = []
 
         dependencies = component.findall('dependency')
-        for d in dependencies:
-            append_ns(d)
+        for dependency in dependencies:
+            append_ns(dependency)
             self['dependencies'].append({
-                'id': expand_ns(d.get('id')),
-                'type': expand_ns(d.get('type')),
-                'required': d.get('required')
+                'id'        : expand_ns(dependency.get('id')),
+                'type'      : expand_ns(dependency.get('type')),
+                'required'  : dependency.get('required')
                 })
-            remove_ns(d)
+            remove_ns(dependency)
 
         # Provided component types:
         self['provided-components'] = []
 
         provided_components = component.findall('provide-component')
-        for c in provided_components:
-            append_ns(c)
-            self['provided-components'].append(expand_ns(c.get('type')))
-            remove_ns(c)
+        for component in provided_components:
+            append_ns(component)
+            self['provided-components'].append(expand_ns(component.get('type')))
+            remove_ns(component)
 
 
         # Package information:
@@ -160,10 +164,7 @@ class Manifest(dict):
 
         self['package'] = {}
 
-        if package.get('auto') == 'true':
-            self['package']['auto'] = True
-        else:
-            self['package']['auto'] = False
+        self['package']['auto'] = package.get('auto') == 'true'
 
         self['package']['rules'] = {
             'ignore': [],
@@ -171,12 +172,12 @@ class Manifest(dict):
             'desktop': [],
             'icon': [],
             'library': [],
-            }
+        }
 
         rules = package.findall('rule')
-        for r in rules:
-            type = r.get('type')
-            files = r.get('files')
+        for rule in rules:
+            type  = rule.get('type')
+            files = rule.get('files')
             self['package']['rules'][type].append(files)
 
 

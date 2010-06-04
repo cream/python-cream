@@ -1,3 +1,4 @@
+import os
 import gobject
 import weakref
 
@@ -19,11 +20,11 @@ class Feature(_Feature):
     """ "Feature" that can be "mixed" into Cream components. """
     dependencies = None
 
-    def __new__(cls, component):
+    def __new__(cls, component, *args, **kwargs):
         """ Make sure all dependencies for this feature are loaded. """
         if cls.dependencies:
             for dependency in cls.dependencies:
-                component.load_feature(dependency)
+                component.load_feature(dependency, *args, **kwargs)
         return super(Feature, cls).__new__(cls, component)
 
     def __finalize__(self):
@@ -47,7 +48,6 @@ class ConfigurationFeature(Feature):
     def __finalize__(self):
 
         if self.autosave:
-            print "Autosaving...", [(n, f.value) for n, f in self.config.fields.iteritems()]
             self.config.save()
 
 
@@ -96,8 +96,19 @@ class HotkeyFeature(Feature, gobject.GObject):
         self.emit('hotkey-activated', action)
 
 
+class ExtensionFeature(Feature):
+    def __init__(self, component, directory='extensions'):
+        Feature.__init__(self, component)
+
+        from cream.extensions import ExtensionManager, ExtensionInterface
+        component.extension_manager = ExtensionManager(
+            [os.path.join(component.context.manifest['path'], directory)],
+            ExtensionInterface(component.extension_api)
+        )
+
 
 FEATURES.update({
-    'org.cream.config' : ConfigurationFeature,
-    'org.cream.hotkeys': HotkeyFeature
+    'org.cream.extensions'  : ExtensionFeature,
+    'org.cream.config'      : ConfigurationFeature,
+    'org.cream.hotkeys'     : HotkeyFeature
 })

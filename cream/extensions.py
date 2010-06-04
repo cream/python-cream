@@ -45,6 +45,11 @@ class ExtensionManager(object):
         return self.extensions
 
 
+    def load_all(self, interface=None):
+        map(lambda ext: self._load(ext, interface),
+            self.extensions.itervalues()
+        )
+
     def load_by_name(self, name, interface=None):
 
         ext = self.extensions.get_by_name(name)
@@ -93,7 +98,7 @@ class ExtensionInterface(object):
             ExtensionInterface({
                 'foo': foo_function,
                 'bar': bar_function
-                })
+            })
         """
 
         self.interface = interface

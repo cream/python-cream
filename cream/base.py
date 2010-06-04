@@ -54,23 +54,25 @@ class Component(object):
 
         os.chdir(self.context.working_directory)
 
+
         # Load required features...
         self._features = list()
-        self._loaded_features = dict()
-        # dict is the fastest for "do you have X" lookup, which runs in O(1)
+        self._loaded_features = dict() # dict is the fastest for "do you have X"
+                                       # lookup, which runs in O(1)
 
         if features:
             self.context.manifest['features'].extend(features)
 
-        for feature_name in self.context.manifest['features']:
+        for feature_name, kwargs in self.context.manifest['features']:
             try:
                 feature_class = FEATURES[feature_name]
             except KeyError:
-                raise NoSuchFeature("Could not load feature '{0}'!".format(feature_name))
+                raise NoSuchFeature("Could not load feature '%s'" % feature_name)
             else:
-                self.load_feature(feature_class)
+                self.load_feature(feature_class, **kwargs)
 
-    def load_feature(self, feature_class):
+    def load_feature(self, feature_class, **kwargs):
+        """ Make sure a feature is only loaded once for a Component. """
         if feature_class not in self._loaded_features:
-            self._features.append(feature_class(self))
+            self._features.append(feature_class(self, **kwargs))
             self._loaded_features[feature_class] = None # just some dummy value
