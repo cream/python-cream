@@ -27,8 +27,6 @@ class Extension(Component):
         Component.__init__(self)
         self.interface = interface
 
-        self.path = self.meta['path']
-
 
 class ExtensionManager(object):
     """ Class for managing extensions. """
@@ -38,7 +36,7 @@ class ExtensionManager(object):
         self.paths = paths
         self.interface = interface
 
-        self.extensions = MetaDataDB(self.paths[0]) # TODO: multiple paths
+        self.extensions = ManifestDB(self.paths[0], type='org.cream.Extension') # TODO: multiple paths
 
 
     def list(self):
