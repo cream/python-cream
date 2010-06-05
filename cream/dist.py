@@ -35,7 +35,7 @@ def discover(path):
         }
 
 
-def setup(manifest=None, **args):
+def get_pkg_info(manifest=None, **args):
 
     if manifest:
         pkg_info = discover(manifest)
@@ -55,5 +55,7 @@ def setup(manifest=None, **args):
     pkg_info.update(args)
 
     print pkg_info
+    return pkg_info
 
-    _setup(**pkg_info)
+def setup(manifest=None, **args):
+    _setup(**get_pkg_info(manifest, **args))
