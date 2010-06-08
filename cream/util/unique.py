@@ -45,7 +45,6 @@ class UniqueApplication(gobject.GObject):
 
     def quit(self):
         self._unique_manager.quit()
-        print 'Yeah, I\'m dead.'
 
 gobject.type_register(UniqueApplication)
 gobject.signal_new('already-running', UniqueApplication, gobject.SIGNAL_RUN_LAST, \
@@ -62,11 +61,9 @@ class UniqueManager(object):
         socket_path = SOCKET_TEMPLATE % ident
         if os.path.exists(socket_path):
             # This application is already running. I'm a client.
-            print '--- client'
             return UniqueManagerClient(app, ident)
         else:
             # I'm the server.
-            print '--- server'
             return UniqueManagerServer(app, ident)
 
     def __init__(self, app, ident):
@@ -225,10 +222,8 @@ class UniqueManagerServer(UniqueManager):
                              self._listen_callback))
 
     def _listen_callback(self, source, condition):
-        print 'Yay listening.'
         conn, addr = self.socket.accept()
         conn.setblocking(False)
-        print 'Gotcha:', conn, addr
         # add the client
         client = Client(self, conn)
         self.add_client(client)
@@ -240,12 +235,10 @@ class UniqueManagerServer(UniqueManager):
 
     def add_client(self, client):
         self.clients[client.conn] = client
-        print 'Added client %r ...' % client
 
     def remove_client(self, client):
         client.remove()
         del self.clients[client.conn]
-        print 'Removed client %r ...' % client
 
     def get_client_by_conn(self, conn):
         return self.clients[conn]
