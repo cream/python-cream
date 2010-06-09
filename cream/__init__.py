@@ -54,7 +54,6 @@ class Module(Component, unique.UniqueApplication):
 
     def quit(self):
         unique.UniqueApplication.quit(self)
-        print "QUIT!"
 
         # __finalize__ all registered features:
         for feature in self._features:
