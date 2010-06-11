@@ -2,12 +2,19 @@ import sys
 import ctypes
 
 libc = ctypes.CDLL(None)
+strlen = libc.strlen
+strlen.argtypes = [ctypes.c_void_p]
+strlen.restype = ctypes.c_size_t
+
+memset = libc.memset
+memset.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_size_t]
+memset.restype = ctypes.c_void_p
 
 PR_SET_NAME = 15
 PR_GET_NAME = 16
 
 prctl = libc.prctl
-#prctl.argtypes = [ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong] # we don't want no type safety
+prctl.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong] # we don't want no type safety
 prctl.restype = ctypes.c_int
 
 def _get_argc_argv():
@@ -24,7 +31,7 @@ def setprocname(name):
     argc, argv = _get_argc_argv()
     libc.strncpy(argv[0], name, len(name))
     next = ctypes.addressof(argv[0].contents) + len(name)
-    nextlen = libc.strlen(next)
+    nextlen = strlen(next)
     libc.memset(next, 0, nextlen)
     if prctl(PR_SET_NAME, name, 0, 0, 0) != 0:
         raise OSError()

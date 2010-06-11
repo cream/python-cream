@@ -75,6 +75,13 @@ class Screen(object):
         """
         self._send_clientmessage(self.root, "_NET_SHOWING_DESKTOP", 32, [show])
 
+    def activate(self, window, indication=1):
+        """
+            Activate this window.
+        """
+        self._send_clientmessage(self.root, "_NET_ACTIVATE_WINDOW", 32,
+            [indication, window.get_internal(), 0])
+
 if __name__ == '__main__':
     conn = connect()
     wmctrl = Screen(conn, conn.setup.roots[0].root)
