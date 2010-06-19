@@ -6,8 +6,6 @@ import imp
 from . import Component
 from .manifest import ManifestDB
 
-META_TYPE_EXTENSION = 'Cream Extension'
-
 EXTENSIONS = {}
 
 def register(ext):
@@ -22,12 +20,8 @@ class Extension(Component):
     """ Class for building extensions. """
 
     def __init__(self, interface):
-        """
-        :param interface: An `cream.extensions.ExtensionInterface`.
-        """
         Component.__init__(self)
         self.interface = interface
-
 
 class ExtensionManager(object):
     """ Class for managing extensions. """
@@ -39,28 +33,23 @@ class ExtensionManager(object):
 
         self.extensions = ManifestDB(self.paths[0], type='org.cream.Extension') # TODO: multiple paths
 
-
-    def list(self):
-        return self.extensions
-
-
-    def load_all(self, interface=None):
+    def load_all(self, interface=None, *args, **kwargs):
         return map(lambda ext: self._load(ext, interface),
                    self.extensions.by_name.itervalues())
 
-    def load_by_name(self, name, interface=None):
+    def load_by_name(self, name, interface=None, *args, **kwargs):
 
         ext = self.extensions.get_by_name(name)
         return self._load(ext, interface)
 
 
-    def load_by_hash(self, hash, interface=None):
+    def load_by_hash(self, hash, interface=None, *args, **kwargs):
 
         ext = self.extensions.get_by_hash(hash)
         return self._load(ext, interface)
 
 
-    def _load(self, extension, interface=None):
+    def _load(self, extension, interface=None, *args, **kwargs):
         # '/foo/bar/extensions/myext.py' --> 'myext'
         module_name = os.path.splitext(os.path.basename(extension['entry']))[0]
         module_path = extension['path']
@@ -73,31 +62,8 @@ class ExtensionManager(object):
 
         # Getting and instantiating the extension class.
         cls = getattr(mod, EXTENSIONS[os.path.join(module_path, module_name + '.py')].__name__)
-        instance = cls(interface or self.interface)
+        instance = cls(interface or self.interface, *args, **kwargs)
 
         sys.path.remove(module_path)
 
         return instance
-
-
-class ExtensionInterface(object):
-    """ Class for building an API for extensions. """
-
-    def __init__(self, interface):
-        """
-        :param interface: A `dict` containing the API for extensions:
-
-        Example::
-
-            ExtensionInterface({
-                'foo': foo_function,
-                'bar': bar_function
-            })
-        """
-
-        self.interface = interface
-
-
-    def __getattr__(self, key):
-
-        return self.interface[key]

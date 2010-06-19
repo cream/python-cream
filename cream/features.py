@@ -103,7 +103,7 @@ class ExtensionFeature(Feature):
         from cream.extensions import ExtensionManager, ExtensionInterface
         component.extension_manager = ExtensionManager(
             [os.path.join(component.context.working_directory, directory)],
-            ExtensionInterface(component.extension_api)
+            ExtensionInterface(component.extension_interface)
         )
 
 
