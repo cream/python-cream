@@ -100,10 +100,10 @@ class ExtensionFeature(Feature):
     def __init__(self, component, directory='extensions'):
         Feature.__init__(self, component)
 
-        from cream.extensions import ExtensionManager, ExtensionInterface
+        from cream.extensions import ExtensionManager
         component.extension_manager = ExtensionManager(
             [os.path.join(component.context.working_directory, directory)],
-            ExtensionInterface(component.extension_interface)
+            component.extension_interface
         )
 
 
