@@ -1,0 +1,3 @@
+[submodule "cream/gui/widgets"]
+	path = cream/gui/widgets
+	url = git://github.com/cream/gtkwidgets
