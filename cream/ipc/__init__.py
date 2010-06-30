@@ -151,7 +151,7 @@ class Object(dbus.service.Object, gobject.GObject):
         self._bus = bus
         self._bus_name = bus_name
         self._path = path
-        self._interface = interface or bus_name
+        self._interface = interface or path[1:].replace('/', '.')
 
         # set the new interface
         self.__class__._set_interface(self._interface)
