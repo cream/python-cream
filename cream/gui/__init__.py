@@ -32,12 +32,14 @@ class CompositeBin(gtk.Fixed):
         ctx.set_operator(cairo.OPERATOR_OVER)
 
         ctx.rectangle(*event.area)
+        ctx.clip()
 
         for child in self.children:
             alloc = child.get_allocation()
             ctx.move_to(alloc.x, alloc.y)
             ctx.set_source_pixmap(child.window, alloc.x, alloc.y)
             ctx.paint()
+
         return False
 
 
@@ -66,6 +68,14 @@ class CompositeBin(gtk.Fixed):
             pass
 
 
+    def raise_child(self, child):
+
+        child.window.raise_()
+        self.children.remove(child)
+        self.children.insert(len(self.children), child)
+        self.window.invalidate_rect(child.allocation, True)
+
+
 class Timeline(gobject.GObject):
 
     __gtype_name__ = 'Timeline'
@@ -92,7 +102,7 @@ class Timeline(gobject.GObject):
             self._states.append(self.curve(len(self._states) * (1.0 / n_frames)))
         self._states.reverse()
 
-        gobject.timeout_add(int(self.duration / FRAMERATE), self.update)
+        gobject.timeout_add(int(self.duration / n_frames), self.update)
 
 
     def update(self):
