@@ -57,7 +57,7 @@ class Component(object):
 
         # Load required features...
         self._features = list()
-        self._loaded_features = dict() # dict is the fastest for "do you have X"
+        self._loaded_features = set()
                                        # lookup, which runs in O(1)
 
         if features:
@@ -75,4 +75,4 @@ class Component(object):
         """ Make sure a feature is only loaded once for a Component. """
         if feature_class not in self._loaded_features:
             self._features.append(feature_class(self, **kwargs))
-            self._loaded_features[feature_class] = None # just some dummy value
+            self._loaded_features.add(feature_class)

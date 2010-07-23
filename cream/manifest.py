@@ -90,15 +90,11 @@ class Manifest(dict):
             })
             remove_ns(license)
 
-        # Icons:
-        self['icons'] = {
-            'scalable': None
-        }
-
-        icons = component.findall('icon')
-        for icon in icons:
+        # Icon:
+        icon = component.find('icon')
+        if icon is not None:
             append_ns(icon)
-            self['icons'][icon.get('size')] = expand_path(icon.get('path'))
+            self['icon'] = expand_path(icon.get('path'))
             remove_ns(icon)
 
         # Descriptions:
