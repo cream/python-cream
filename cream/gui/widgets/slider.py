@@ -76,7 +76,8 @@ class Slider(gtk.Viewport):
         try:
             gobject.source_remove(self.timeouts.pop(widget)[0])
         except KeyError:
-            raise RuntimeError("No timeout for '%s' was added" % widget)
+            pass
+
 
     def reset_slide_timeout(self, widget, seconds=None):
         """
