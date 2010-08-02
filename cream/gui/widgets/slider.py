@@ -87,9 +87,9 @@ class Slider(gtk.Viewport):
             try:
                 seconds = self.timeouts[widget][1]
             except KeyError:
-                # exception will be thrown by ``remove_slide_timeout`` anyways
                 pass
-        self.remove_slide_timeout(widget)
+            else:
+                self.remove_slide_timeout(widget)
         self.add_slide_timeout(widget, seconds)
 
     def try_remove_slide_timeout(self, widget):
