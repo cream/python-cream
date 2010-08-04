@@ -58,7 +58,6 @@ class Component(object):
         # Load required features...
         self._features = list()
         self._loaded_features = set()
-                                       # lookup, which runs in O(1)
 
         if features:
             self.context.manifest['features'].extend(features)
