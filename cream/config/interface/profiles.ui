@@ -5,8 +5,10 @@
   <object class="GtkHBox" id="profile_box">
     <property name="visible">True</property>
     <child>
-      <object class="GtkComboBox" id="profile_selector">
+      <object class="GtkComboBoxEntry" id="profile_selector">
         <property name="visible">True</property>
+        <property name="model">profiles_storage</property>
+        <property name="text_column">0</property>
       </object>
       <packing>
         <property name="position">0</property>
@@ -46,5 +48,11 @@
         <property name="position">2</property>
       </packing>
     </child>
+  </object>
+  <object class="GtkListStore" id="profiles_storage">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
   </object>
 </interface>

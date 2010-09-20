@@ -17,24 +17,19 @@ class CreamFrontend(ConfigurationDialog):
         ConfigurationDialog.__init__(self, *args, **kwargs)
         self.add_events(self._new_events)
 
-        self.profile_interface = gtk.Builder()
-        self.profile_interface.add_from_file(joindir(__file__, 'interface/profiles.ui'))
+        self.interface = gtk.Builder()
+        self.interface.add_from_file(joindir(__file__, 'interface/profiles.ui'))
 
-        self.profile_box = self.profile_interface.get_object('profile_box')
-        self.profile_selector = self.profile_interface.get_object('profile_selector')
-        self.profile_add = self.profile_interface.get_object('profile_add')
-        self.profile_remove = self.profile_interface.get_object('profile_remove')
+        self.profile_box = self.interface.get_object('profile_box')
+        self.profile_selector = self.interface.get_object('profile_selector')
+        self.profile_add = self.interface.get_object('profile_add')
+        self.profile_remove = self.interface.get_object('profile_remove')
+        self.profiles_storage = self.interface.get_object('profiles_storage')
 
         self.profile_selector.connect('changed', self.on_profile_changed)
         self.profile_add.connect('clicked', self.on_add_profile)
         self.profile_remove.connect('clicked', self.on_remove_profile)
-
-        self.profiles_storage = gtk.ListStore(str)
-        self.profile_selector.set_model(self.profiles_storage)
-
-        cell_renderer = gtk.CellRendererText()
-        self.profile_selector.pack_start(cell_renderer)
-        self.profile_selector.add_attribute(cell_renderer, 'text', 0)
+        self.profile_selector.connect('editing-done', self.on_new_profile_added)
 
         self.layout.pack_start(self.profile_box, False, False, 0)
         self.layout.reorder_child(self.profile_box, 0)
@@ -76,21 +71,20 @@ class CreamFrontend(ConfigurationDialog):
 
     def on_add_profile(self, sender):
         """ User clicked the "add profile" button """
-        dialog = dialogs.InputDialog('Profile name:', title='Add profile')
-        dialog.invalid_inputs = self.profiles
-        dialog.error_message = ("A profile named '%s' already exists. "
-                                "Please chose another name.")
-
-        name = dialog.run()
-        if name:
-            self.emit('add-profile', name, self.profile_selector.get_active()+1)
+        self.profile_selector.editing_done()
 
     def on_remove_profile(self, sender):
         """ User clicked the "remove profile" button """
         if dialogs.YesNoDialog("Are you sure you want to delete this profile?\n"
                                "It cannot be recovered.").run():
             self.emit('remove-profile', self.profile_selector.get_active())
-
+            
+    def on_new_profile_added(self, sender):
+        """User is done with editing the Entry"""
+        name = sender.get_active_text()
+        index = self.profile_selector.get_active() + 2
+        if name:
+            self.emit('add-profile', name, index)
 
     @property
     def editable(self):
