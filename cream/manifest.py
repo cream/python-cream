@@ -27,7 +27,7 @@ class NoNamespaceDefinedException(BaseException):
 
 class Manifest(dict):
 
-    def __init__(self, path):
+    def __init__(self, path, expand_paths=True):
 
         dict.__init__(self)
 
@@ -60,8 +60,11 @@ class Manifest(dict):
                 return s
 
         def expand_path(p):
-            if p:
-                return os.path.join(os.path.dirname(self._path), p)
+            if expand_paths:
+                if p:
+                    return os.path.join(os.path.dirname(self._path), p)
+            else:
+                return p
 
         # TODO: Use a bottom-down iteration here and lookup node handlers
         # from a dict or so. Much faster!

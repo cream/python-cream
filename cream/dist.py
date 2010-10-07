@@ -17,20 +17,45 @@
 # MA 02110-1301, USA.
 
 import os
+import tempfile
 from distutils.core import setup as _setup
 from cream.manifest import Manifest
 
 MODULE_DIR = 'share/cream/modules/{pkg_name}'
+
+MODULE_START_SCRIPT_TEMPLATE = """\
+#!/bin/sh
+
+# {module_name} launcher script (automatically generated)
+
+exec python {module_entry} "$@"
+exit $?
+"""
+
+def generate_start_script(manifest):
+
+    module_name = manifest['name']
+    module_entry = os.path.join(MODULE_DIR.format(pkg_name=manifest['id']), manifest['entry'])
+
+    tmp_dir = tempfile.mkdtemp()
+    fh = open(os.path.join(tmp_dir, slugify(manifest['name'])), 'w')
+    fh.write(MODULE_START_SCRIPT_TEMPLATE.format(module_name=module_name, module_entry=module_entry))
+    fh.close()
+
+    return os.path.join(tmp_dir, slugify(manifest['name']))
+
 
 def slugify(s):
     return s.lower().replace(' ', '-')
 
 
 def discover(path):
-    manifest = Manifest(path)
+    manifest = Manifest(path, expand_paths=False)
+
+    #print generate_start_script(manifest)
 
     return {
-        'name': slugify(manifest['name']),
+        'name': manifest['id'],
         'version': manifest['version'],
         }
 
@@ -54,7 +79,6 @@ def get_pkg_info(manifest=None, **args):
 
     pkg_info.update(args)
 
-    print pkg_info
     return pkg_info
 
 def setup(manifest=None, **args):
