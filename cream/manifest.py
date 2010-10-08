@@ -99,6 +99,17 @@ class Manifest(dict):
             append_ns(icon)
             self['icon'] = expand_path(icon.get('path'))
             remove_ns(icon)
+            
+        # Category
+        self['categories'] = []
+        
+        categories = component.findall('category')
+        for category in categories:
+            append_ns(category)
+            self['categories'].append({
+                'id'  : expand_ns(category.get('id'))
+            })
+            remove_ns(category)
 
         # Descriptions:
         self['descriptions'] = {}
