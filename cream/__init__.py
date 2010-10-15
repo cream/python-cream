@@ -24,9 +24,9 @@ from .base import Component
 class Module(Component, unique.UniqueApplication):
     """ Baseclass for all modules... """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
 
-        Component.__init__(self)
+        Component.__init__(self, *args, **kwargs)
         unique.UniqueApplication.__init__(self, self.context.manifest['id'])
 
 
