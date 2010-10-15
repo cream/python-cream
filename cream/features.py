@@ -7,7 +7,7 @@ FEATURES = dict()
 class NoSuchFeature(Exception):
     pass
 
-class Feature(_Feature):
+class Feature(object):
     """ "Feature" that can be "mixed" into Cream components. """
     dependencies = None
 
