@@ -19,7 +19,7 @@
 import os
 import gobject
 
-from cream.util import cached_property, get_source_file
+from cream.util import get_source_file
 
 from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
