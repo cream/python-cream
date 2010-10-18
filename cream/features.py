@@ -4,19 +4,10 @@ import weakref
 
 FEATURES = dict()
 
-
-class NoSuchFeature(BaseException):
+class NoSuchFeature(Exception):
     pass
 
-class _Feature(object):
-    """
-    Special superclass for `Feature` that throws away the `component`
-    parameter in `__new__` to avoid Python errors.
-    """
-    def __new__(cls, component):
-        return super(_Feature, cls).__new__(cls)
-
-class Feature(_Feature):
+class Feature(object):
     """ "Feature" that can be "mixed" into Cream components. """
     dependencies = None
 
@@ -25,25 +16,24 @@ class Feature(_Feature):
         if cls.dependencies:
             for dependency in cls.dependencies:
                 component.load_feature(dependency, *args, **kwargs)
-        return super(Feature, cls).__new__(cls, component)
+        return super(Feature, cls).__new__(cls)
 
     def __finalize__(self):
         pass
 
 
 class ConfigurationFeature(Feature):
+    autosave = True
 
-    def __init__(self, component):
+    def __init__(self, component, read=True):
 
         Feature.__init__(self)
 
         from .config import Configuration
 
-        component.config = Configuration(component.context.working_directory)
+        component.config = Configuration(component.context.working_directory,
+                                         read=read)
         self.config = component.config
-
-        self.autosave = True
-
 
     def __finalize__(self):
 
