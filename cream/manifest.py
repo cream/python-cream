@@ -199,10 +199,13 @@ class Manifest(dict):
 
 class ManifestDB(object):
 
-    def __init__(self, path, type=None):
+    def __init__(self, paths, t=None):
 
-        self.path = path
-        self.type = type
+        if not type(paths) == list:
+            self.paths = [paths]
+        else:
+            self.paths = paths
+        self.type = t
 
         self.by_name = {}
         self.by_id = {}
@@ -212,11 +215,15 @@ class ManifestDB(object):
 
     def scan(self):
 
-        res = self._scan(self.path, self.type)
-
-        for i in res:
-            self.by_name[i['name']] = i
-            self.by_id[i['id']] = i
+        for p in self.paths:
+            try:
+                res = self._scan(p, self.type)
+        
+                for i in res:
+                    self.by_name[i['name']] = i
+                    self.by_id[i['id']] = i
+            except:
+                pass
 
 
     def get_by_name(self, name):
