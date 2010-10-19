@@ -99,10 +99,10 @@ class Manifest(dict):
             append_ns(icon)
             self['icon'] = expand_path(icon.get('path'))
             remove_ns(icon)
-            
+
         # Category
         self['categories'] = []
-        
+
         categories = component.findall('category')
         for category in categories:
             append_ns(category)
@@ -201,10 +201,11 @@ class ManifestDB(object):
 
     def __init__(self, paths, t=None):
 
-        if not type(paths) == list:
+        if isinstance(paths, basestring):
             self.paths = [paths]
         else:
             self.paths = paths
+
         self.type = t
 
         self.by_name = {}
@@ -215,10 +216,10 @@ class ManifestDB(object):
 
     def scan(self):
 
-        for p in self.paths:
+        for path in self.paths:
             try:
-                res = self._scan(p, self.type)
-        
+                res = self._scan(path, self.type)
+
                 for i in res:
                     self.by_name[i['name']] = i
                     self.by_id[i['id']] = i
