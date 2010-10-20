@@ -27,7 +27,7 @@ class ConfigurationFeature(Feature):
 
     def __init__(self, component, read=True):
 
-        if read == True or if read == 'true':
+        if read == True or read == 'true':
             read = True
         else:
             read = False
