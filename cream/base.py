@@ -40,7 +40,7 @@ class Component(object):
 
     __manifest__ = 'manifest.xml'
 
-    def __init__(self, path=None, features=None):
+    def __init__(self, path=None):
 
         if path:
             self.__manifest__ = path
@@ -58,9 +58,6 @@ class Component(object):
         # Load required features...
         self._features = list()
         self._loaded_features = set()
-
-        if features:
-            self.context.manifest['features'].extend(features)
 
         for feature_name, kwargs in self.context.manifest['features']:
             try:

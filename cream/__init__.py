@@ -49,7 +49,7 @@ class Module(Component, unique.UniqueApplication):
     @cached_property
     def messages(self):
         from cream.log import Messages
-        return Messages(id=self._bus_name)
+        return Messages(id=self.context.manifest['id'])
 
 
     def quit(self):

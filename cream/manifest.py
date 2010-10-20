@@ -141,8 +141,13 @@ class Manifest(dict):
         features = component.findall('use-feature')
         for feature in features:
             append_ns(feature)
+            feature_args = {}
+            
+            for k, v in feature.attrib.iteritems():
+                if not k in ['id']:
+                    feature_args[k] = v
             self['features'].append(
-                (expand_ns(feature.attrib.pop('id')), feature.attrib)
+                (expand_ns(feature.attrib.pop('id')), feature_args)
             )
             remove_ns(feature)
 
@@ -199,14 +204,14 @@ class Manifest(dict):
 
 class ManifestDB(object):
 
-    def __init__(self, paths, t=None):
+    def __init__(self, paths, type=None):
 
         if isinstance(paths, basestring):
             self.paths = [paths]
         else:
             self.paths = paths
 
-        self.type = t
+        self.type = type
 
         self.by_name = {}
         self.by_id = {}
