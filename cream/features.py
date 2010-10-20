@@ -27,6 +27,11 @@ class ConfigurationFeature(Feature):
 
     def __init__(self, component, read=True):
 
+        if read == True or if read == 'true':
+            read = True
+        else:
+            read = False
+
         Feature.__init__(self)
 
         from .config import Configuration
