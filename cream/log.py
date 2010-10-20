@@ -60,7 +60,7 @@ class Messages(object):
     def process_message(self, type, message):
 
         if self.verbosity >= type:
-            s = '%(color)s [%(short)s @ %(time)s)] %(message)s%(uncolor)s' % {
+            s = '%(color)s [%(short)s @ %(time)s] %(message)s%(uncolor)s' % {
                 'color'   : COLORS[type],
                 'short'   : SHORTS[type],
                 'time'    : strftime("%H:%M:%S"),
