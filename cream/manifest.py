@@ -142,7 +142,7 @@ class Manifest(dict):
         for feature in features:
             append_ns(feature)
             feature_args = {}
-            
+
             for k, v in feature.attrib.iteritems():
                 if not k in ['id']:
                     feature_args[k] = v

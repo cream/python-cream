@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+import os
 import gobject
 
 class Subprocess(gobject.GObject):
@@ -25,15 +28,10 @@ class Subprocess(gobject.GObject):
         """ Run the process. """
 
         process_data = gobject.spawn_async(self.command,
-                flags=gobject.SPAWN_SEARCH_PATH|gobject.SPAWN_DO_NOT_REAP_CHILD,
-                standard_output=True,
-                standard_error=True
+                flags=gobject.SPAWN_SEARCH_PATH|gobject.SPAWN_DO_NOT_REAP_CHILD
                 )
 
         self.pid = process_data[0]
-        self.stdout = os.fdopen(process_data[2])
-        self.stderr = os.fdopen(process_data[3])
-
         self.watch = gobject.child_watch_add(self.pid, self.exited_cb)
 
 
