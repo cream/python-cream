@@ -22,7 +22,15 @@ from cream.util import unique
 from .base import Component
 
 class Module(Component, unique.UniqueApplication):
-    """ Baseclass for all modules... """
+    """
+    This is the baseclass for every Cream module. It bundles features
+    you would need within your application or service, such as:
+
+     - an GObject mainloop,
+     - logging capabilities,
+     - and meta data handling.
+     
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -31,7 +39,15 @@ class Module(Component, unique.UniqueApplication):
 
 
     def main(self, enable_threads=True):
-        """ Run a GLib-mainloop. """
+        """
+        Run a GObject-mainloop.
+
+        :param enable_threads: Whether to enable GObjects threading
+                               capabilities. This can have negative
+                               impact on some applications. Please use
+                               with care!
+        :type enable_threads: `bool`
+        """
 
         import gobject
 
@@ -53,6 +69,8 @@ class Module(Component, unique.UniqueApplication):
 
 
     def quit(self):
+        """ Quit the mainloop and exit the application. """
+
         unique.UniqueApplication.quit(self)
 
         # __finalize__ all registered features:
