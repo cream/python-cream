@@ -5,7 +5,16 @@ import sys
 import gobject
 
 class Subprocess(gobject.GObject):
-    """ GObject API for handling child processes. """
+    """
+    GObject API for handling child processes.
+
+    :param command: The command to be run as a subprocess.
+    :param fork: If `True` this process will be detached from its parent and
+                 run independent. This means that no excited-signal will be fired.
+
+    :type command: `list`
+    :type fork: `bool`
+    """
 
     __gtype_name__ = 'Subprocess'
     __gsignals__ = {
@@ -23,6 +32,7 @@ class Subprocess(gobject.GObject):
 
         self.command = command
         self.name = name
+        self.forked = fork
 
         if fork:
             self.fork()
@@ -40,7 +50,8 @@ class Subprocess(gobject.GObject):
 
 
     def exited_cb(self, pid, condition):
-        self.emit('exited', pid, condition)
+        if not self.forked:
+            self.emit('exited', pid, condition)
 
 
     def fork(self):
