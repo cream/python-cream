@@ -10,7 +10,7 @@ class Subprocess(gobject.GObject):
 
     :param command: The command to be run as a subprocess.
     :param fork: If `True` this process will be detached from its parent and
-                 run independent. This means that no excited-signal will be fired.
+                 run independent. This means that no excited-signal will be emited.
 
     :type command: `list`
     :type fork: `bool`
