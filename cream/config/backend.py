@@ -13,7 +13,7 @@ FIELD_TYPE_MAP = {
     'char' : 'str',
     'color' : 'str',
     'font' : 'str',
-    'file' : 'str',
+    'file' : 'tuple',
     'integer' : 'int',
     'hotkey' : 'str',
     'boolean' : 'bool',
@@ -58,7 +58,7 @@ class CreamXMLBackend(dict, Backend):
         conf_file = os.path.join(self.directory, CONFIGURATION_SCHEME_FILE)
         if not os.path.isfile(conf_file):
             from . import MissingConfigurationDefinitionFile
-            raise MissingConfigurationDefinitionFile("Could not find %s." % conf_file)
+            raise MissingConfigurationDefinitionFile("Could not find %r." % conf_file)
 
         tree = parse_xml(conf_file)
         root = tree.getroot()
@@ -70,9 +70,14 @@ class CreamXMLBackend(dict, Backend):
             option_type = attributes.pop('type')
             if option_type.startswith('multioption'):
                 # TODO: Hrm
+                attributes['default'] = child.attrib.pop('default', None)
                 attributes['options'] = unserialize_atomic(child, FIELD_TYPE_MAP)
             else:
-                attributes['default'] = unserialize_atomic(child, FIELD_TYPE_MAP)
+                if not (
+                    FIELD_TYPE_MAP.get(option_type) in ('list', 'tuple', 'dict')
+                    and not child.getchildren()
+                ):
+                    attributes['default'] = unserialize_atomic(child, FIELD_TYPE_MAP)
             scheme[option_name] = get_field(option_type)(**attributes)
 
         return scheme
