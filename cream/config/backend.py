@@ -13,6 +13,7 @@ FIELD_TYPE_MAP = {
     'char' : 'str',
     'color' : 'str',
     'font' : 'str',
+    'file' : 'str',
     'integer' : 'int',
     'hotkey' : 'str',
     'boolean' : 'bool',
