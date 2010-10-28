@@ -46,7 +46,10 @@ class Subprocess(gobject.GObject):
                 )
 
         self.pid = process_data[0]
+
         self.watch = gobject.child_watch_add(self.pid, self.exited_cb)
+
+        return self.pid
 
 
     def exited_cb(self, pid, condition):

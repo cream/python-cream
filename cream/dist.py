@@ -24,22 +24,32 @@ from cream.manifest import Manifest
 MODULE_DIR = 'share/cream/modules/{pkg_name}'
 
 MODULE_START_SCRIPT_TEMPLATE = """\
-#!/bin/sh
+#! /usr/bin/env python
 
-# {module_name} launcher script (automatically generated)
+import os
 
-exec python {module_entry} "$@"
-exit $?
+from cream.path import MODULE_DIRS
+from cream.manifest import ManifestDB
+from cream.util.subprocess import Subprocess
+
+modules = ManifestDB(MODULE_DIRS, 'org.cream.Module')
+manifest = modules.get_by_id('{id}')
+
+try:
+    process = Subprocess(['python', manifest['entry']], manifest['name'])
+    pid = process.run()
+    os.waitpid(pid, 0)
+except KeyboardInterrupt:
+    import sys
+    sys.exit(0)
 """
 
 def generate_start_script(manifest):
 
-    module_name = manifest['name']
-    module_entry = os.path.join(MODULE_DIR.format(pkg_name=manifest['id']), manifest['entry'])
 
     tmp_dir = tempfile.mkdtemp()
     fh = open(os.path.join(tmp_dir, slugify(manifest['name'])), 'w')
-    fh.write(MODULE_START_SCRIPT_TEMPLATE.format(module_name=module_name, module_entry=module_entry))
+    fh.write(MODULE_START_SCRIPT_TEMPLATE.format(id=manifest['id']))
     fh.close()
 
     return os.path.join(tmp_dir, slugify(manifest['name']))
@@ -52,11 +62,12 @@ def slugify(s):
 def discover(path):
     manifest = Manifest(path, expand_paths=False)
 
-    #print generate_start_script(manifest)
+    start_script_path = generate_start_script(manifest)
 
     return {
         'name': manifest['id'],
         'version': manifest['version'],
+        'scripts': [start_script_path]
         }
 
 
@@ -73,8 +84,11 @@ def get_pkg_info(manifest=None, **args):
         pkg_name = None
 
     if args.has_key('data_files'):
-        for path, files in args['data_files']:
-            args['data_files'].remove((path, files))
+        df = args['data_files']
+        args['data_files'] = []
+
+        for path, files in df:
+            print path, files
             args['data_files'].append((path.format(pkg_name=pkg_name, module_dir=MODULE_DIR.format(pkg_name=pkg_name)), files))
 
     pkg_info.update(args)
