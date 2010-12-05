@@ -35,6 +35,24 @@ def urljoin_multi(*parts):
         s = s[:-1]
     return s
 
+def extend_querystring(url, params):
+    """
+    Extends the querystring of an given url. Example::
+
+        >>> extend_querystring('http://cream-project.org', {'foo': 'bar'})
+        http://cream-project.org?foo=bar
+        >>> extend_querystring('http://cream-project.org?id=1', {'foo': 'bar', 'type': 'awesome'})
+        http://cream-project.org?id=1&foo=bar&type=awesome
+    """
+    import urllib
+    import urlparse
+
+    url_parts = list(urlparse.urlparse(url))
+    query = dict(urlparse.parse_qsl(url_parts[4]))
+    query.update(params)
+    url_parts[4] = urllib.urlencode(query)
+    return urlparse.urlunparse(url_parts)
+
 def isiterable(iterable, include_strings=False, include_dicts=True):
     if isinstance(iterable, basestring):
         return include_strings
