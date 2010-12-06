@@ -36,9 +36,10 @@ class ConfigurationFeature(Feature):
 
         from .config import Configuration
 
-        component.config = Configuration(component.context.working_directory,
+        component.config = Configuration(component.context.expand_path(component.context.working_directory),
                                          read=read)
         self.config = component.config
+
 
     def __finalize__(self):
 

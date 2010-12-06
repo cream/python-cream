@@ -16,10 +16,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
+import os
+
 from cream.util import cached_property
 from cream.util import unique
 
-from .base import Component
+from .base import Component, EXEC_MODE_PRODUCTIVE, EXEC_MODE_DEVELOPMENT
 
 class Module(Component, unique.UniqueApplication):
     """
@@ -32,9 +34,15 @@ class Module(Component, unique.UniqueApplication):
      
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, module_id, *args, **kwargs):
 
-        Component.__init__(self, *args, **kwargs)
+        if os.path.isfile('./manifest.xml'):
+            exec_mode = EXEC_MODE_DEVELOPMENT
+        else:
+            exec_mode = EXEC_MODE_PRODUCTIVE
+            raise BaseExcepion('Not implemented yet!')
+
+        Component.__init__(self, *args, exec_mode=exec_mode, **kwargs)
         unique.UniqueApplication.__init__(self, self.context.manifest['id'])
 
 

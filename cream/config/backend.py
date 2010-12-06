@@ -23,9 +23,10 @@ FIELD_TYPE_MAP = {
 
 CONFIGURATION_DIRECTORY   = 'configuration'
 STATIC_OPTIONS_FILE       = 'static-options.xml'
-CONFIGURATION_SCHEME_FILE = 'configuration.xml'
+CONFIGURATION_SCHEME_FILE = 'scheme.xml'
 PROFILE_ROOT_NODE         = 'configuration_profile'
 STATIC_OPTIONS_ROOT_NODE  = 'static_options'
+PROFILE_DIR               = 'profiles'
 
 
 def get_field(name):
@@ -55,7 +56,7 @@ class CreamXMLBackend(dict, Backend):
                                               CONFIGURATION_DIRECTORY)
 
     def read_scheme(self):
-        conf_file = os.path.join(self.directory, CONFIGURATION_SCHEME_FILE)
+        conf_file = os.path.join(self.configuration_dir, CONFIGURATION_SCHEME_FILE)
         if not os.path.isfile(conf_file):
             from . import MissingConfigurationDefinitionFile
             raise MissingConfigurationDefinitionFile("Could not find %r." % conf_file)
@@ -84,24 +85,28 @@ class CreamXMLBackend(dict, Backend):
 
 
     def read(self):
-        if not os.path.exists(self.configuration_dir):
+        if not os.path.exists(os.path.join(self.configuration_dir, PROFILE_DIR)):
             return dict(), tuple()
 
         static_options = {}
         profiles = []
 
-        for profile in os.listdir(self.configuration_dir):
+        for profile in os.listdir(os.path.join(self.configuration_dir, PROFILE_DIR)):
+            if os.path.isdir(os.path.join(self.configuration_dir, profile)):
+                continue
             try:
                 obj = unserialize_file(os.path.join(self.configuration_dir, profile))
             except XMLSyntaxError,  err:
                 self.warn("Could not parse XML configuration file '{file}': {error}".format(
                     file=profile, error=err))
             else:
-                if profile == STATIC_OPTIONS_FILE:
-                    static_options.update(obj)
-                    continue
-                else:
-                    profiles.append(obj)
+                profiles.append(obj)
+
+        try:
+            obj = unserialize_file(os.path.join(self.configuration_dir, STATIC_OPTIONS_FILE))
+            static_options.update(obj)
+        except:
+            pass
 
         return static_options, profiles
 

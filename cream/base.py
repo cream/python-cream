@@ -25,15 +25,26 @@ from cream.util.dependency import Dependency
 from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
 
+EXEC_MODE_PRODUCTIVE = 'EXEC_MODE_PRODUCTIVE'
+EXEC_MODE_DEVELOPMENT = 'EXEC_MODE_DEVELOPMENT'
+
 class Context(object):
 
-    def __init__(self, path):
+    def __init__(self, path, exec_mode=EXEC_MODE_PRODUCTIVE):
 
         self.path = path
+
+        self.execution_mode = exec_mode
 
         self.environ = os.environ
         self.working_directory = os.path.dirname(self.path)
         self.manifest = Manifest(self.path)
+
+
+    def expand_path(self, p):
+
+        if self.execution_mode == EXEC_MODE_DEVELOPMENT:
+            return os.path.join(self.working_directory, p)
 
 
 class Component(object):
@@ -41,7 +52,7 @@ class Component(object):
 
     __manifest__ = 'manifest.xml'
 
-    def __init__(self, path=None):
+    def __init__(self, path=None, exec_mode=EXEC_MODE_PRODUCTIVE):
 
         if path:
             self.__manifest__ = path
@@ -51,7 +62,7 @@ class Component(object):
             self.__manifest__ = os.path.join(base_path, self.__manifest__)
 
         # Create context and load manifest file...
-        self.context = Context(self.__manifest__)
+        self.context = Context(self.__manifest__, exec_mode)
 
         os.chdir(self.context.working_directory)
 
