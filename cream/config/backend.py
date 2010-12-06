@@ -114,11 +114,14 @@ class CreamXMLBackend(dict, Backend):
     def save(self, profile_list, fields):
         if not os.path.exists(self.configuration_dir):
             os.makedirs(self.configuration_dir)
+        
+        if not os.path.exists(os.path.join(self.configuration_dir, PROFILE_DIR)):
+            os.makedirs(os.path.join(self.configuration_dir, PROFILE_DIR))
 
         for index, profile in enumerate(profile_list):
             if not profile.is_editable: continue
 
-            filename = os.path.join(self.configuration_dir,
+            filename = os.path.join(self.configuration_dir, PROFILE_DIR,
                                     slugify(profile.name)+'.xml')
 
             serialize_to_file({
