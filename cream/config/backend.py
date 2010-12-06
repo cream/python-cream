@@ -85,11 +85,18 @@ class CreamXMLBackend(dict, Backend):
 
 
     def read(self):
-        if not os.path.exists(os.path.join(self.configuration_dir, PROFILE_DIR)):
-            return dict(), tuple()
 
         static_options = {}
         profiles = []
+
+        try:
+            obj = unserialize_file(os.path.join(self.configuration_dir, STATIC_OPTIONS_FILE))
+            static_options.update(obj)
+        except:
+            pass
+
+        if not os.path.exists(os.path.join(self.configuration_dir, PROFILE_DIR)):
+            return dict(), tuple()
 
         for profile in os.listdir(os.path.join(self.configuration_dir, PROFILE_DIR)):
             if os.path.isdir(os.path.join(self.configuration_dir, profile)):
@@ -101,12 +108,6 @@ class CreamXMLBackend(dict, Backend):
                     file=profile, error=err))
             else:
                 profiles.append(obj)
-
-        try:
-            obj = unserialize_file(os.path.join(self.configuration_dir, STATIC_OPTIONS_FILE))
-            static_options.update(obj)
-        except:
-            pass
 
         return static_options, profiles
 
