@@ -55,6 +55,8 @@ class CreamXMLBackend(dict, Backend):
         self.configuration_dir = os.path.join(self.directory,
                                               CONFIGURATION_DIRECTORY)
 
+        self.profile_dir = os.path.join(self.configuration_dir, PROFILE_DIR)
+
     def read_scheme(self):
         conf_file = os.path.join(self.configuration_dir, CONFIGURATION_SCHEME_FILE)
         if not os.path.isfile(conf_file):
@@ -95,14 +97,14 @@ class CreamXMLBackend(dict, Backend):
         except:
             pass
 
-        if not os.path.exists(os.path.join(self.configuration_dir, PROFILE_DIR)):
+        if not os.path.exists(self.profile_dir):
             return dict(), tuple()
 
-        for profile in os.listdir(os.path.join(self.configuration_dir, PROFILE_DIR)):
-            if os.path.isdir(os.path.join(self.configuration_dir, profile)):
+        for profile in os.listdir(self.profile_dir):
+            if os.path.isdir(os.path.join(self.profile_dir, profile)):
                 continue
             try:
-                obj = unserialize_file(os.path.join(self.configuration_dir, profile))
+                obj = unserialize_file(os.path.join(self.profile_dir, profile))
             except XMLSyntaxError,  err:
                 self.warn("Could not parse XML configuration file '{file}': {error}".format(
                     file=profile, error=err))
@@ -114,15 +116,14 @@ class CreamXMLBackend(dict, Backend):
     def save(self, profile_list, fields):
         if not os.path.exists(self.configuration_dir):
             os.makedirs(self.configuration_dir)
-        
-        if not os.path.exists(os.path.join(self.configuration_dir, PROFILE_DIR)):
-            os.makedirs(os.path.join(self.configuration_dir, PROFILE_DIR))
+
+        if not os.path.exists(self.profile_dir):
+            os.makedirs(self.profile_dir)
 
         for index, profile in enumerate(profile_list):
             if not profile.is_editable: continue
 
-            filename = os.path.join(self.configuration_dir, PROFILE_DIR,
-                                    slugify(profile.name)+'.xml')
+            filename = os.path.join(self.profile_dir, slugify(profile.name)+'.xml')
 
             serialize_to_file({
                 'name' : profile.name,
