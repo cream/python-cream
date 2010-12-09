@@ -20,7 +20,8 @@ import os
 from cream.util import cached_property
 from cream.util import unique
 
-from .base import Component, EXEC_MODE_PRODUCTIVE, EXEC_MODE_DEVELOPMENT
+from .base import Component, EXEC_MODE_PRODUCTIVE, EXEC_MODE_DEVELOPMENT, \
+                    BASE_DIRS
 
 class Module(Component, unique.UniqueApplication):
     """
@@ -35,12 +36,19 @@ class Module(Component, unique.UniqueApplication):
 
     def __init__(self, module_id, *args, **kwargs):
 
+        path = ''
+
         if os.getenv('CREAM_EXECUTION_MODE'):
             exec_mode = EXEC_MODE_DEVELOPMENT
         else:
             exec_mode = EXEC_MODE_PRODUCTIVE
 
-        Component.__init__(self, *args, exec_mode=exec_mode, **kwargs)
+            for directory in BASE_DIRS:
+                directory = directory.format(module_id)
+                if os.path.exists(os.path.join(directory, 'manifest.xml')):
+                    path = os.path.join(directory, 'manifest.xml')
+
+        Component.__init__(self, path, *args, exec_mode=exec_mode, **kwargs)
         unique.UniqueApplication.__init__(self, self.context.manifest['id'])
 
 
