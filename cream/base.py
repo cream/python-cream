@@ -27,6 +27,12 @@ from .features import FEATURES, NoSuchFeature
 EXEC_MODE_PRODUCTIVE = 'EXEC_MODE_PRODUCTIVE'
 EXEC_MODE_DEVELOPMENT = 'EXEC_MODE_DEVELOPMENT'
 
+BASE_DIRS = [
+            '/usr/share/cream/{0}',
+             os.path.expanduser('~/.local/share/cream/{0}'),
+             os.path.join(os.environ.get('VIRTUAL_ENV', ''), 'share/cream/{0}')
+            ]
+
 class Context(object):
 
     def __init__(self, path, exec_mode=EXEC_MODE_PRODUCTIVE):
@@ -38,12 +44,7 @@ class Context(object):
         self.environ = os.environ
         self.working_directory = os.path.dirname(self.path)
         self.manifest = Manifest(self.path)
-        self.dirs = [
-            '/usr/share/cream/{0}'.format(self.manifest['id']),
-             os.path.expanduser('~/.local/share/cream/{0}'.format(self.manifest['id'])),
-             os.path.join(os.environ.get('VIRTUAL_ENV', ''),
-                            'share/cream/{0}'.format(self.manifest['id']))
-            ]
+        self.dirs = [d.format(self.manifest['id']) for d in BASE_DIRS]
 
 
     def expand_path(self, p):
