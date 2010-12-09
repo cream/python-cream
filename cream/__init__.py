@@ -30,16 +30,15 @@ class Module(Component, unique.UniqueApplication):
      - an GObject mainloop,
      - logging capabilities,
      - and meta data handling.
-     
+
     """
 
     def __init__(self, module_id, *args, **kwargs):
 
-        if os.path.isfile('./manifest.xml'):
+        if os.getenv('CREAM_EXECUTION_MODE'):
             exec_mode = EXEC_MODE_DEVELOPMENT
         else:
             exec_mode = EXEC_MODE_PRODUCTIVE
-            raise BaseExcepion('Not implemented yet!')
 
         Component.__init__(self, *args, exec_mode=exec_mode, **kwargs)
         unique.UniqueApplication.__init__(self, self.context.manifest['id'])

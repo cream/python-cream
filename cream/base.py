@@ -37,12 +37,23 @@ class Context(object):
         self.environ = os.environ
         self.working_directory = os.path.dirname(self.path)
         self.manifest = Manifest(self.path)
+        self.dirs = [
+            '/usr/share/cream/{0}'.format(self.manifest['id']),
+             os.path.expanduser('~/.local/share/cream/{0}'.format(self.manifest['id'])),
+             os.path.join(os.environ.get('VIRTUAL_ENV', ''),
+                            'share/cream/{0}'.format(self.manifest['id']))
+            ]
 
 
     def expand_path(self, p):
 
         if self.execution_mode == EXEC_MODE_DEVELOPMENT:
             return os.path.join(self.working_directory, p)
+        else:
+            for directory in self.dirs:
+                if os.path.exists(os.path.join(directory, p)):
+                    return os.path.join(directory, p)
+
 
 
 class Component(object):
