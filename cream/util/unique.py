@@ -29,7 +29,6 @@
         Client responds with `cu` message and dies.
 """
 
-import sys
 import os
 import socket
 
@@ -359,4 +358,3 @@ class UniqueManagerClient(UniqueManager, Handler):
         # Server got our information, we can die now.
         self.send_message('cu')
         self.app.quit()
-
