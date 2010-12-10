@@ -46,7 +46,7 @@ class Context(object):
     def expand_path(self, p, mode='r'):
         """
         Choose the correct location of a path depending on the mode of
-        the execution (development, productive) wheather you want to
+        the execution (development, productive) whether you want to
         read or write to the location.
         Please refer to `cream.path` to get a list of valid locations,
         following the XDG standarts.
