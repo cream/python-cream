@@ -44,6 +44,17 @@ class Context(object):
 
 
     def expand_path(self, p, mode='r'):
+        """
+        Choose the correct location of a path depending on the mode of
+        the execution (development, productive) wheather you want to
+        read or write to the location.
+        Please refer to `cream.path` to get a list of valid locations,
+        following the XDG standarts.
+
+        :param p: The path to expand.
+        :type p: `str`
+        :param mode: 'r' for reading and 'w' for writing capabilities.
+        """
 
         if self.execution_mode == EXEC_MODE_DEVELOPMENT:
             return os.path.join(self.working_directory, p)
@@ -53,7 +64,7 @@ class Context(object):
                     if os.path.exists(os.path.join(directory, p)):
                         return os.path.join(directory, p)
             else:
-                return self.dirs[-1]
+                return os.path.join(self.dirs[-1], p)
 
 
 
