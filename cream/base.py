@@ -16,7 +16,6 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 import os
-import gobject
 
 from cream.util import get_source_file
 from cream.util.dependency import Dependency
