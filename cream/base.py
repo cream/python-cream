@@ -29,9 +29,13 @@ EXEC_MODE_DEVELOPMENT = 'EXEC_MODE_DEVELOPMENT'
 
 BASE_DIRS = [
             '/usr/share/cream/{0}',
-             os.path.expanduser('~/.local/share/cream/{0}'),
-             os.path.join(os.environ.get('VIRTUAL_ENV', ''), 'share/cream/{0}')
+             os.path.expanduser('~/.local/share/cream/{0}')
             ]
+
+virtual_env = os.environ.get('VIRTUAL_ENV', '')
+if virtual_env:
+    BASE_DIRS.append(os.path.join(virtual_env, 'share/cream/{0}'))
+
 
 class Context(object):
 
@@ -47,14 +51,17 @@ class Context(object):
         self.dirs = [d.format(self.manifest['id']) for d in BASE_DIRS]
 
 
-    def expand_path(self, p):
+    def expand_path(self, p, mode='r'):
 
         if self.execution_mode == EXEC_MODE_DEVELOPMENT:
             return os.path.join(self.working_directory, p)
         else:
-            for directory in self.dirs:
-                if os.path.exists(os.path.join(directory, p)):
-                    return os.path.join(directory, p)
+            if mode == 'r':
+                for directory in self.dirs:
+                    if os.path.exists(os.path.join(directory, p)):
+                        return os.path.join(directory, p)
+            else:
+                return self.dirs[-1]
 
 
 

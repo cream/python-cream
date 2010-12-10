@@ -65,17 +65,26 @@ class FieldNotFound(Exception):
 class CreamXMLBackend(dict, Backend):
     compatibility_mode = False
 
-    def __init__(self, directory='.'):
+    def __init__(self, path='.'):
         Backend.__init__(self, None)
         dict.__init__(self)
-        self.directory = directory
-        self.configuration_dir = os.path.join(self.directory,
-                                              CONFIGURATION_DIRECTORY)
+        self.path = path
 
-        self.profile_dir = os.path.join(self.configuration_dir, PROFILE_DIR)
+        if isinstance(self.path, str):
+            self.path_read = os.path.join(self.path,
+                                                CONFIGURATION_DIRECTORY)
+            self.path_write = os.path.join(self.path,
+                                                CONFIGURATION_DIRECTORY)
+        else:
+            print "FUNC"
+            self.path_read = self.path(CONFIGURATION_DIRECTORY)
+            self.path_write = self.path(CONFIGURATION_DIRECTORY, mode='w')
+            print self.path_read
+            print self.path_write
+
 
     def read_scheme(self):
-        conf_file = os.path.join(self.configuration_dir, CONFIGURATION_SCHEME_FILE)
+        conf_file = os.path.join(self.path_read, CONFIGURATION_SCHEME_FILE)
         if not os.path.isfile(conf_file):
             from . import MissingConfigurationDefinitionFile
             raise MissingConfigurationDefinitionFile("Could not find %r." % conf_file)
@@ -109,19 +118,19 @@ class CreamXMLBackend(dict, Backend):
         profiles = []
 
         try:
-            obj = unserialize_file(os.path.join(self.configuration_dir, STATIC_OPTIONS_FILE))
+            obj = unserialize_file(os.path.join(self.path_read, STATIC_OPTIONS_FILE))
             static_options.update(obj)
         except:
             pass
 
-        if not os.path.exists(self.profile_dir):
+        if not os.path.exists(os.path.join(self.path_read, PROFILE_DIR)):
             return dict(), tuple()
 
-        for profile in os.listdir(self.profile_dir):
-            if os.path.isdir(os.path.join(self.profile_dir, profile)):
+        for profile in os.listdir(os.path.join(self.path_read, PROFILE_DIR)):
+            if os.path.isdir(os.path.join(os.path.join(self.path_read, PROFILE_DIR), profile)):
                 continue
             try:
-                obj = unserialize_file(os.path.join(self.profile_dir, profile))
+                obj = unserialize_file(os.path.join(self.path_read, PROFILE_DIR, profile))
             except XMLSyntaxError,  err:
                 self.warn("Could not parse XML configuration file '{file}': {error}".format(
                     file=profile, error=err))
@@ -131,16 +140,16 @@ class CreamXMLBackend(dict, Backend):
         return static_options, profiles
 
     def save(self, profile_list, fields):
-        if not os.path.exists(self.configuration_dir):
-            os.makedirs(self.configuration_dir)
+        if not os.path.exists(self.path_write):
+            os.makedirs(self.path_write)
 
-        if not os.path.exists(self.profile_dir):
-            os.makedirs(self.profile_dir)
+        if not os.path.exists(os.path.join(self.path_write, PROFILE_DIR)):
+            os.makedirs(os.path.join(self.path_write, PROFILE_DIR))
 
         for index, profile in enumerate(profile_list):
             if not profile.is_editable: continue
 
-            filename = os.path.join(self.profile_dir, slugify(profile.name)+'.xml')
+            filename = os.path.join(os.path.join(self.path_write, PROFILE_DIR), slugify(profile.name)+'.xml')
 
             serialize_to_file({
                 'name' : profile.name,
@@ -153,5 +162,5 @@ class CreamXMLBackend(dict, Backend):
                               fields.iteritems() if field.static)
         if static_options:
             serialize_to_file(static_options,
-                os.path.join(self.configuration_dir, STATIC_OPTIONS_FILE),
+                os.path.join(self.path_write, STATIC_OPTIONS_FILE),
                 tag=STATIC_OPTIONS_ROOT_NODE)
