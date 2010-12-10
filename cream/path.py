@@ -25,6 +25,8 @@ except:
     XDG_DATA_HOME = [os.path.expanduser('~/.local/share')]
 
 
-CONFIG_DIRS = [os.path.join(d, 'cream/config') for d in XDG_DATA_HOME + XDG_DATA_DIRS]
-MODULE_DIRS = [os.path.join(d, 'cream/modules') for d in XDG_DATA_HOME + XDG_DATA_DIRS]
-DATA_DIRS = [os.path.join(d, 'cream/data') for d in XDG_DATA_HOME + XDG_DATA_DIRS]
+CREAM_DIRS = [os.path.join(d, 'cream/config') for d in XDG_DATA_HOME + XDG_DATA_DIRS]
+
+virtual_env = os.environ.get('VIRTUAL_ENV', '')
+if virtual_env:
+    CREAM_DIRS.append(os.path.join(virtual_env, 'share/cream/'))

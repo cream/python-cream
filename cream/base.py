@@ -23,18 +23,10 @@ from cream.util.dependency import Dependency
 
 from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
+from .path import CREAM_DIRS
 
 EXEC_MODE_PRODUCTIVE = 'EXEC_MODE_PRODUCTIVE'
 EXEC_MODE_DEVELOPMENT = 'EXEC_MODE_DEVELOPMENT'
-
-BASE_DIRS = [
-            '/usr/share/cream/{0}',
-             os.path.expanduser('~/.local/share/cream/{0}')
-            ]
-
-virtual_env = os.environ.get('VIRTUAL_ENV', '')
-if virtual_env:
-    BASE_DIRS.append(os.path.join(virtual_env, 'share/cream/{0}'))
 
 
 class Context(object):
@@ -48,7 +40,7 @@ class Context(object):
         self.environ = os.environ
         self.working_directory = os.path.dirname(self.path)
         self.manifest = Manifest(self.path)
-        self.dirs = [d.format(self.manifest['id']) for d in BASE_DIRS]
+        self.dirs = [os.path.join(d, self.manifest['id']) for d in CREAM_DIRS]
 
 
     def expand_path(self, p, mode='r'):
