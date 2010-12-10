@@ -17,7 +17,7 @@
 
 import re
 import time
-from cream.path import MODULE_DIRS
+from cream.path import CREAM_DIRS
 from cream.manifest import ManifestDB
 from cream.util.subprocess import Subprocess
 
@@ -34,7 +34,7 @@ class Dependency(object):
 
 class ModuleSubprocess(object):
 
-    modules = ManifestDB(MODULE_DIRS, 'org.cream.Module')
+    modules = ManifestDB(CREAM_DIRS, 'org.cream.Module')
 
     def __init__(self, module):
         if re.match('^(\w+\.)+\w+$', module):
