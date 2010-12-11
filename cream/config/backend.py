@@ -70,17 +70,16 @@ class CreamXMLBackend(dict, Backend):
         dict.__init__(self)
         self.path = path
 
-        if isinstance(self.path, str):
+        if isinstance(self.path, basestring):
             self.path_read = os.path.join(self.path,
                                                 CONFIGURATION_DIRECTORY)
             self.path_write = os.path.join(self.path,
                                                 CONFIGURATION_DIRECTORY)
-        else:
-            print "FUNC"
+        elif hasattr(self.path, '__call__'):
             self.path_read = self.path(CONFIGURATION_DIRECTORY)
             self.path_write = self.path(CONFIGURATION_DIRECTORY, mode='w')
-            print self.path_read
-            print self.path_write
+        else:
+            raise TypeError
 
 
     def read_scheme(self):
