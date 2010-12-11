@@ -84,8 +84,11 @@ class Component(object):
         # Create context and load manifest file...
         self.context = Context(self.__manifest__, exec_mode)
 
-        os.chdir(self.context.working_directory)
-
+        try:
+            os.chdir(self.context.working_directory)
+        except OSError:
+            import warnings
+            warnings.warn("Could not change directory to the module's working directory!")
 
         # Load required features...
         self._features = list()
