@@ -36,13 +36,14 @@ class Module(Component, unique.UniqueApplication):
 
     def __init__(self, module_id, *args, **kwargs):
 
+        manifest_path = ''
+
         if os.getenv('CREAM_EXECUTION_MODE'):
             exec_mode = EXEC_MODE_DEVELOPMENT
             manifest_path = './manifest.xml'
         else:
             exec_mode = EXEC_MODE_PRODUCTIVE
 
-            manifest_path = ''
             for directory in CREAM_DIRS:
                 path = os.path.join(directory, module_id, 'manifest.xml')
                 if os.path.exists(path):
