@@ -40,7 +40,6 @@ class Module(Component, unique.UniqueApplication):
 
         if os.getenv('CREAM_EXECUTION_MODE'):
             exec_mode = EXEC_MODE_DEVELOPMENT
-            manifest_path = './manifest.xml'
         else:
             exec_mode = EXEC_MODE_PRODUCTIVE
 
