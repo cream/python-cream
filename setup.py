@@ -15,7 +15,9 @@ setup(
         'cream.contrib.appindicators',
             'cream.contrib.appindicators.dbusmenu',
             'cream.contrib.appindicators.host',
-            'cream.contrib.appindicators.watcher'
+            'cream.contrib.appindicators.watcher',
+        'cream.contrib.notifications',
+        'cream.contrib.udisks'
     ],
     package_data={'cream.config': ['interface/*']}
 )
