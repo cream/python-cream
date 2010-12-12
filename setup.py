@@ -1,8 +1,8 @@
 from distutils.core import setup
 
 setup(
-    name = 'Cream Libraries',
-    version = '0.1',
+    name = 'cream-libs',
+    version = '0.4',
     packages = [
         'cream',
         'cream.gui',
