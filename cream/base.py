@@ -62,8 +62,9 @@ class Context(object):
                 for directory in self.dirs:
                     if os.path.exists(os.path.join(directory, p)):
                         return os.path.join(directory, p)
-            else:
                 return os.path.join(self.dirs[-1], p)
+            else:
+                return os.path.join(self.dirs[0], p)
 
 
 
