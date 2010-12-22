@@ -70,20 +70,13 @@ class CreamXMLBackend(dict, Backend):
         dict.__init__(self)
         self.path = path
 
-        if isinstance(self.path, basestring):
-            self.path_read = os.path.join(self.path,
-                                                CONFIGURATION_DIRECTORY)
-            self.path_write = os.path.join(self.path,
-                                                CONFIGURATION_DIRECTORY)
-        elif hasattr(self.path, '__call__'):
-            self.path_read = self.path(CONFIGURATION_DIRECTORY)
-            self.path_write = self.path(CONFIGURATION_DIRECTORY, mode='w')
-        else:
-            raise TypeError
-
 
     def read_scheme(self):
-        conf_file = os.path.join(self.path_read, CONFIGURATION_SCHEME_FILE)
+        if isinstance(self.path, basestring):
+            conf_file = os.path.join(self.path, CONFIGURATION_SCHEME_FILE)
+        else:
+            conf_file = self.path(CONFIGURATION_DIRECTORY + '/' + CONFIGURATION_SCHEME_FILE)
+
         if not os.path.isfile(conf_file):
             from . import MissingConfigurationDefinitionFile
             raise MissingConfigurationDefinitionFile("Could not find %r." % conf_file)
@@ -117,19 +110,29 @@ class CreamXMLBackend(dict, Backend):
         profiles = []
 
         try:
-            obj = unserialize_file(os.path.join(self.path_read, STATIC_OPTIONS_FILE))
+            if isinstance(self.path, basestring):
+                p = os.path.join(self.path, STATIC_OPTIONS_FILE)
+            else:
+                p = self.path(CONFIGURATION_DIRECTORY + '/' + STATIC_OPTIONS_FILE)
+            obj = unserialize_file(p)
             static_options.update(obj)
         except:
             pass
 
-        if not os.path.exists(os.path.join(self.path_read, PROFILE_DIR)):
+        
+        if isinstance(self.path, basestring):
+            profile_dir = os.path.join(self.path, PROFILE_DIR)
+        else:
+            profile_dir = self.path(CONFIGURATION_DIRECTORY + '/' + PROFILE_DIR)
+
+        if not os.path.exists(profile_dir):
             return dict(), tuple()
 
-        for profile in os.listdir(os.path.join(self.path_read, PROFILE_DIR)):
-            if os.path.isdir(os.path.join(os.path.join(self.path_read, PROFILE_DIR), profile)):
+        for profile in os.listdir(profile_dir):
+            if os.path.isdir(os.path.join(profile_dir, profile)):
                 continue
             try:
-                obj = unserialize_file(os.path.join(self.path_read, PROFILE_DIR, profile))
+                obj = unserialize_file(os.path.join(profile_dir, profile))
             except XMLSyntaxError,  err:
                 self.warn("Could not parse XML configuration file '{file}': {error}".format(
                     file=profile, error=err))
@@ -139,16 +142,22 @@ class CreamXMLBackend(dict, Backend):
         return static_options, profiles
 
     def save(self, profile_list, fields):
-        if not os.path.exists(self.path_write):
-            os.makedirs(self.path_write)
+        
+        if isinstance(self.path, basestring):
+            p = self.path
+        else:
+            p = self.path(CONFIGURATION_DIRECTORY, mode='w')
 
-        if not os.path.exists(os.path.join(self.path_write, PROFILE_DIR)):
-            os.makedirs(os.path.join(self.path_write, PROFILE_DIR))
+        if not os.path.exists(p):
+            os.makedirs(p)
+
+        if not os.path.exists(os.path.join(p, PROFILE_DIR)):
+            os.makedirs(os.path.join(p, PROFILE_DIR))
 
         for index, profile in enumerate(profile_list):
             if not profile.is_editable: continue
 
-            filename = os.path.join(os.path.join(self.path_write, PROFILE_DIR), slugify(profile.name)+'.xml')
+            filename = os.path.join(os.path.join(p, PROFILE_DIR), slugify(profile.name)+'.xml')
 
             serialize_to_file({
                 'name' : profile.name,
@@ -161,5 +170,5 @@ class CreamXMLBackend(dict, Backend):
                               fields.iteritems() if field.static)
         if static_options:
             serialize_to_file(static_options,
-                os.path.join(self.path_write, STATIC_OPTIONS_FILE),
+                os.path.join(p, STATIC_OPTIONS_FILE),
                 tag=STATIC_OPTIONS_ROOT_NODE)
