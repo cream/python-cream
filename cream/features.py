@@ -53,7 +53,11 @@ class ConfigurationFeature(Feature):
 
         from .config import Configuration
 
-        component.config = Configuration(component.context.expand_path,
+        scheme_path = os.path.join(component.context.get_path(), 'configuration/scheme.xml')
+        config_dir = os.path.join(component.context.get_user_path(), 'configuration/')
+
+        component.config = Configuration(scheme_path,
+                                         config_dir,
                                          read=read)
         self.config = component.config
 

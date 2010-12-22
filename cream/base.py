@@ -22,7 +22,7 @@ from cream.util.dependency import Dependency
 
 from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
-from .path import CREAM_DIRS
+from .path import CREAM_DIRS, XDG_DATA_HOME
 
 EXEC_MODE_PRODUCTIVE = 'EXEC_MODE_PRODUCTIVE'
 EXEC_MODE_DEVELOPMENT = 'EXEC_MODE_DEVELOPMENT'
@@ -30,42 +30,28 @@ EXEC_MODE_DEVELOPMENT = 'EXEC_MODE_DEVELOPMENT'
 
 class Context(object):
 
-    def __init__(self, path, exec_mode=EXEC_MODE_PRODUCTIVE):
+    def __init__(self, path, user_path_prefix=None, exec_mode=EXEC_MODE_PRODUCTIVE):
 
         self.path = path
+        self.user_path_prefix = user_path_prefix
 
         self.execution_mode = exec_mode
 
         self.environ = os.environ
         self.working_directory = os.path.dirname(self.path)
         self.manifest = Manifest(self.path)
-        self.dirs = [os.path.join(d, self.manifest['id']) for d in CREAM_DIRS]
 
 
-    def expand_path(self, p, mode='r'):
-        """
-        Choose the correct location of a path depending on the mode of
-        the execution (development, productive) whether you want to
-        read or write to the location.
-        Please refer to `cream.path` to get a list of valid locations,
-        following the XDG standarts.
+    def get_path(self):
+        return os.path.dirname(self.path)
 
-        :param p: The path to expand.
-        :type p: `str`
-        :param mode: 'r' for reading and 'w' for writing capabilities.
-        """
 
-        if self.execution_mode == EXEC_MODE_DEVELOPMENT:
-            return os.path.join(self.working_directory, p)
+    def get_user_path(self):
+        if self.user_path_prefix:
+            user_path =os.path.join(XDG_DATA_HOME[0], 'cream', self.user_path_prefix, self.manifest['id'])
         else:
-            if mode == 'r':
-                for directory in self.dirs:
-                    if os.path.exists(os.path.join(directory, p)):
-                        return os.path.join(directory, p)
-                return os.path.join(self.dirs[-1], p)
-            else:
-                return os.path.join(self.dirs[0], p)
-
+            user_path = os.path.join(XDG_DATA_HOME[0], 'cream', self.manifest['id'])
+        return user_path
 
 
 class Component(object):
@@ -73,7 +59,7 @@ class Component(object):
 
     __manifest__ = 'manifest.xml'
 
-    def __init__(self, path=None, exec_mode=EXEC_MODE_PRODUCTIVE):
+    def __init__(self, path=None, user_path_prefix=None, exec_mode=EXEC_MODE_PRODUCTIVE):
 
         if path:
             self.__manifest__ = path
@@ -83,7 +69,7 @@ class Component(object):
             self.__manifest__ = os.path.join(base_path, self.__manifest__)
 
         # Create context and load manifest file...
-        self.context = Context(self.__manifest__, exec_mode)
+        self.context = Context(self.__manifest__, user_path_prefix, exec_mode)
 
         try:
             os.chdir(self.context.working_directory)

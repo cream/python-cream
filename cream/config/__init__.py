@@ -152,14 +152,14 @@ class Configuration(_Configuration):
         return CreamFrontend
 
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, scheme_path, path, **kwargs):
         # Make sure this instance's `fields` dict is *not* the classes'
         # `fields` dict (hence, the `fields` attribute of class `cls`),
         # but a copy of it.
         # TODO: There has to be a better way.
         self.fields = self.fields.copy()
 
-        backend = CreamXMLBackend(path)
+        backend = CreamXMLBackend(scheme_path, path)
 
         try:
             configuration_scheme = backend.read_scheme()
