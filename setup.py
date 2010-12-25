@@ -11,6 +11,7 @@ setup(
         'cream.config',
         'cream.ipc',
         'cream.util',
+        'cream.xdg',
         'cream.xdg.desktopentries'
     ],
     package_data={'cream.config': ['interface/*']}
