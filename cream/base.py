@@ -18,7 +18,6 @@
 import os
 
 from cream.util import get_source_file
-from cream.util.dependency import Dependency
 
 from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
