@@ -18,7 +18,6 @@
 import os
 
 from cream.util import get_source_file
-from cream.util.dependency import Dependency
 
 from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
@@ -89,8 +88,6 @@ class Component(object):
             else:
                 self.load_feature(feature_class, **kwargs)
 
-        for dependency in self.context.manifest['dependencies']:
-            Dependency(dependency['id'], dependency['type']).run()
 
     def load_feature(self, feature_class, **kwargs):
         """ Make sure a feature is only loaded once for a Component. """

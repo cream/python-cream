@@ -11,13 +11,8 @@ setup(
         'cream.config',
         'cream.ipc',
         'cream.util',
-        'cream.contrib.desktopentries',
-        'cream.contrib.appindicators',
-            'cream.contrib.appindicators.dbusmenu',
-            'cream.contrib.appindicators.host',
-            'cream.contrib.appindicators.watcher',
-        'cream.contrib.notifications',
-        'cream.contrib.udisks'
+        'cream.xdg',
+        'cream.xdg.desktopentries'
     ],
     package_data={'cream.config': ['interface/*']}
 )
