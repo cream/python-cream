@@ -49,14 +49,16 @@ def activate_entry(widget, entry):
         exec_ = '%s -e "%s"' % (term, exec_.encode('string-escape'))
     proc = Popen(exec_, shell=True)
 
-def lookup_icon(stuff, size=ICON_SIZE): # I'd be so happy to use gtk.ICON_SIZE_MENU here, but it returns empty pixbufs sometimes.
-    if os.path.isfile(stuff):
-        return gtk.gdk.pixbuf_new_from_file_at_size(stuff, ICON_SIZE, ICON_SIZE) # TODO
-    try:
-        theme = gtk.icon_theme_get_default()
-        return theme.load_icon(stuff, size, 0).copy()
-    except gobject.GError:
-        print stuff
+def lookup_icon(icon_name, size=ICON_SIZE): # I'd be so happy to use gtk.ICON_SIZE_MENU here, but it returns empty pixbufs sometimes.
+    if os.path.isfile(icon_name):
+        return gtk.gdk.pixbuf_new_from_file_at_size(icon_name, size, size)
+
+    theme = gtk.icon_theme_get_default()
+    icon_info = theme.lookup_icon(icon_name, size, 0)
+    if icon_info:
+        path = icon_info.get_filename()
+        return gtk.gdk.pixbuf_new_from_file_at_size(path, size, size)
+    else:
         return None
 
 def to_gtk(entries):
