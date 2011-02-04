@@ -120,6 +120,10 @@ class Timeline(gobject.GObject):
         self._states.reverse()
 
         gobject.timeout_add(int(self.duration / n_frames), self.update)
+        
+        
+    def stop(self):
+        self._states = []
 
 
     def update(self):
