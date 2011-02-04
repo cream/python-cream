@@ -109,6 +109,7 @@ class Timeline(gobject.GObject):
         self.curve = curve
 
         self._states = []
+        self._stopped = False
 
 
     def run(self):
@@ -123,13 +124,13 @@ class Timeline(gobject.GObject):
         
         
     def stop(self):
-        self._states = []
+        self._stopped = True
 
 
     def update(self):
 
         self.emit('update', self._states.pop())
-        if len(self._states) == 0:
+        if len(self._states) == 0 or self._stopped:
             self.emit('completed')
             return False
         return True
