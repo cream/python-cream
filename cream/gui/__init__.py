@@ -26,42 +26,6 @@ CURVE_SINE = lambda x: math.sin(math.pi / 2 * x)
 
 FRAMERATE = 30.0
 
-class Category(object):
-    
-    def __init__(self):
-
-        self.bubble = Bubble(100, 25)
-
-        self.layout = gtk.VBox()
-        self.layout.set_spacing(2)
-        self.layout.show_all()
-
-        self.bubble.add(self.layout)
-        
-        desktop_entries = DesktopEntry.get_all()
-        for desktop_entry in desktop_entries:
-            if 'Graphics' in desktop_entry.categories:
-                self.add_item(desktop_entry)
-        
-        
-    def add_item(self, desktop_entry):
-    
-        item = MenuItem(desktop_entry)
-        item.connect('button-release-event', self.button_release_cb)
-        item.show()
-        self.layout.pack_start(item, False, True)
-
-
-    def button_release_cb(self, source, event):
-        
-        exec_ = source.desktop_entry.exec_
-        exec_ = exec_.replace('%U', '')
-        exec_ = exec_.replace('%u', '')
-        exec_ = exec_.replace('%s', '')
-        exec_ = exec_.replace('%F', '')
-
-        Subprocess([exec_.strip()]).run()
-
 
 class CompositeBin(gtk.Fixed):
     """ A subclass of `GtkFixed` enabling composition of child widgets to the parent widget. """
@@ -158,8 +122,8 @@ class Timeline(gobject.GObject):
         self._states.reverse()
 
         gobject.timeout_add(int(self.duration / n_frames), self.update)
-        
-        
+
+
     def stop(self):
         self._stopped = True
 
