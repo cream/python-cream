@@ -31,7 +31,7 @@ class CreamFrontend(ConfigurationDialog):
 
         self.profiles = []
 
-        ConfigurationDialog.__init__(self, *args, **kwargs)
+        ConfigurationDialog.__init__(self, title='Configuration', *args, **kwargs)
         self.add_events(self._new_events)
 
         self.interface = gtk.Builder()
