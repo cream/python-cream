@@ -136,6 +136,12 @@ class CreamXMLBackend(dict, Backend):
         if not os.path.exists(self.profile_dir):
             os.makedirs(self.profile_dir)
 
+        # get all saved profiles
+        saved_profiles = {}
+        for profile in os.listdir(self.profile_dir):
+            name = os.path.splitext(profile)[0]
+            saved_profiles[name] = os.path.join(self.profile_dir, profile)
+
 
         for index, profile in enumerate(profile_list):
             if not profile.is_editable: continue
@@ -148,6 +154,13 @@ class CreamXMLBackend(dict, Backend):
                 'position' : index,
                 'selected' : profile_list.active == profile
             }, filename, tag=PROFILE_ROOT_NODE)
+
+            del saved_profiles[profile.name]
+
+        # `saved_profiles` now contains profiles, which have been removed
+        # but are still present in the filesystem. Remove them.
+        for profile in saved_profiles.values():
+            os.remove(profile)
 
         static_options = dict((name, field.value) for name, field in
                               fields.iteritems() if field.static)
