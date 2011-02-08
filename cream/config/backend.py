@@ -71,6 +71,8 @@ class CreamXMLBackend(dict, Backend):
         self.scheme_path = scheme_path
         self.path = path
 
+        self.profile_dir = os.path.join(self.path, PROFILE_DIR)
+
 
     def read_scheme(self):
 
@@ -112,16 +114,14 @@ class CreamXMLBackend(dict, Backend):
         except:
             pass
 
-        profile_dir = os.path.join(self.path, PROFILE_DIR)
-
-        if not os.path.exists(profile_dir):
+        if not os.path.exists(self.profile_dir):
             return dict(), tuple()
 
-        for profile in os.listdir(profile_dir):
-            if os.path.isdir(os.path.join(profile_dir, profile)):
+        for profile in os.listdir(self.profile_dir):
+            if os.path.isdir(os.path.join(self.profile_dir, profile)):
                 continue
             try:
-                obj = unserialize_file(os.path.join(profile_dir, profile))
+                obj = unserialize_file(os.path.join(self.profile_dir, profile))
             except XMLSyntaxError,  err:
                 self.warn("Could not parse XML configuration file '{file}': {error}".format(
                     file=profile, error=err))
@@ -133,11 +133,9 @@ class CreamXMLBackend(dict, Backend):
 
     def save(self, profile_list, fields):
 
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
+        if not os.path.exists(self.profile_dir):
+            os.makedirs(self.profile_dir)
 
-        if not os.path.exists(os.path.join(self.path, PROFILE_DIR)):
-            os.makedirs(os.path.join(self.path, PROFILE_DIR))
 
         for index, profile in enumerate(profile_list):
             if not profile.is_editable: continue
