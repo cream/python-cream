@@ -155,7 +155,8 @@ class CreamXMLBackend(dict, Backend):
                 'selected' : profile_list.active == profile
             }, filename, tag=PROFILE_ROOT_NODE)
 
-            del saved_profiles[profile.name]
+            if profile.name in saved_profiles:
+                del saved_profiles[profile.name]
 
         # `saved_profiles` now contains profiles, which have been removed
         # but are still present in the filesystem. Remove them.
