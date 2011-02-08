@@ -21,7 +21,8 @@ from gpyconf.frontends.gtk import ConfigurationDialog
 from cream.gui import dialogs
 from cream.util import joindir
 
-INTERFACE_FILE = os.path.join('interface', 'config-dialog.glade')
+MODE_NORMAL = 1
+MODE_EDIT = 2
 
 class CreamFrontend(ConfigurationDialog):
     _editable = True
@@ -30,6 +31,7 @@ class CreamFrontend(ConfigurationDialog):
     def __init__(self, *args, **kwargs):
 
         self.profiles = []
+        self._mode = MODE_NORMAL
 
         ConfigurationDialog.__init__(self, title='Configuration', *args, **kwargs)
         self.add_events(self._new_events)
@@ -37,20 +39,32 @@ class CreamFrontend(ConfigurationDialog):
         self.interface = gtk.Builder()
         self.interface.add_from_file(joindir(__file__, 'interface/profiles.ui'))
 
-        self.profile_box = self.interface.get_object('profile_box')
+        self.profile_box_edit = self.interface.get_object('profile_box_edit')
+        self.profile_entry = self.interface.get_object('profile_entry')
+        self.profile_save = self.interface.get_object('profile_save')
+        self.profile_cancel = self.interface.get_object('profile_cancel')
+
+        self.profile_box_normal = self.interface.get_object('profile_box_normal')
         self.profile_selector = self.interface.get_object('profile_selector')
         self.profile_add = self.interface.get_object('profile_add')
         self.profile_remove = self.interface.get_object('profile_remove')
+
         self.profiles_storage = self.interface.get_object('profiles_storage')
 
         self.profile_selector.connect('changed', self.on_profile_changed)
-        self.profile_add.connect('clicked', self.on_add_profile)
+        self.profile_entry.connect('activate', self.change_mode)
+        self.profile_entry.connect('activate', self.on_new_profile_added)
+        self.profile_add.connect('clicked', self.change_mode)
+        self.profile_save.connect('clicked', self.change_mode)
+        self.profile_save.connect('clicked', self.on_new_profile_added)
+        self.profile_cancel.connect('clicked', self.change_mode)
         self.profile_remove.connect('clicked', self.on_remove_profile)
-        self.profile_selector.connect('editing-done', self.on_new_profile_added)
 
-        self.layout.pack_start(self.profile_box, False, False, 0)
-        self.layout.reorder_child(self.profile_box, 0)
+        self.alignment = gtk.Alignment(1, 0.5, 1, 1)
+        self.alignment.add(self.profile_box_normal)
 
+        self.layout.pack_start(self.alignment, False, False, 0)
+        self.layout.reorder_child(self.alignment, 0)
 
     def add_profiles(self, profiles):
         """ Add a list or tuple of `Profile`s to the profile selector """
@@ -86,22 +100,39 @@ class CreamFrontend(ConfigurationDialog):
             self.profiles_storage.get_value(widget.get_active_iter(), 0),
             index)
 
-    def on_add_profile(self, sender):
-        """ User clicked the "add profile" button """
-        self.profile_selector.editing_done()
 
     def on_remove_profile(self, sender):
         """ User clicked the "remove profile" button """
         if dialogs.YesNoDialog("Are you sure you want to delete this profile?\n"
                                "It cannot be recovered.").run():
             self.emit('remove-profile', self.profile_selector.get_active())
-            
+
     def on_new_profile_added(self, sender):
-        """User is done with editing the Entry"""
-        name = sender.get_active_text()
+        """ User is done with editing the Entry """
+        name = self.profile_entry.get_text()
         index = self.profile_selector.get_active() + 2
         if name:
             self.emit('add-profile', name, index)
+
+
+    def change_mode(self, sender):
+        """ User clicked on add or save button. Change the mode. """
+        max_height = max(self.profile_entry.get_allocation()[3],
+                         self.profile_selector.get_allocation()[3]
+                        )
+        self.alignment.set_size_request(-1, max_height)
+
+        box = [widget for widget in self.alignment][0]
+        if self._mode == MODE_NORMAL:
+            self.profile_entry.set_text('')
+            self.alignment.remove(box)
+            self.alignment.add(self.profile_box_edit)
+            self.profile_entry.grab_focus()
+            self._mode = MODE_EDIT
+        else:
+            self.alignment.remove(box)
+            self.alignment.add(self.profile_box_normal)
+            self._mode = MODE_NORMAL
 
     @property
     def editable(self):
