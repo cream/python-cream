@@ -110,7 +110,7 @@ class CreamFrontend(ConfigurationDialog):
     def on_new_profile_added(self, sender):
         """ User is done with editing the Entry """
         name = self.profile_entry.get_text()
-        index = self.profile_selector.get_active() + 2
+        index = self.profile_selector.get_active() + 1
         if name:
             self.emit('add-profile', name, index)
 
