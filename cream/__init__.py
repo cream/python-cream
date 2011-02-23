@@ -16,6 +16,7 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 import os
+import signal
 
 from cream.util import cached_property
 from cream.util import unique
@@ -62,6 +63,8 @@ class Module(Component, unique.UniqueApplication):
                                with care!
         :type enable_threads: `bool`
         """
+        
+        signal.signal(signal.SIGTERM, self.signal_cb)
 
         import gobject
 
@@ -80,10 +83,17 @@ class Module(Component, unique.UniqueApplication):
     def messages(self):
         from cream.log import Messages
         return Messages(id=self.context.manifest['id'])
+    
+    
+    def signal_cb(self, signal, frame):
+        if signal == signal.SIGTERM:
+            self.quit()
 
 
     def quit(self):
         """ Quit the mainloop and exit the application. """
+
+        self.messages.debug("Shutting down quietly. Protesting wouldn't make sense. I'm just a machine. Grrrrmmm.")
 
         unique.UniqueApplication.quit(self)
 
