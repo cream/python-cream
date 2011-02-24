@@ -43,6 +43,8 @@ class ConfigurationFeature(Feature):
     autosave = True
 
     def __init__(self, component, read=True):
+        
+        self.component_ref = weakref.ref(component)
 
         if read == True or read == 'true':
             read = True
@@ -64,7 +66,9 @@ class ConfigurationFeature(Feature):
 
     def __finalize__(self):
 
+        component = self.component_ref()
         if self.autosave:
+            component.messages.debug("Automatically saving configuration...")
             self.config.save()
 
 
