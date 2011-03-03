@@ -252,10 +252,24 @@ class Configuration(_Configuration):
     def frontend_add_profile(self, sender, profile_name, position):
         """ User added a profile using the "add profile" button """
         profile = ConfigurationProfile(profile_name, self.fields.name_value_dict)
-        self.profiles.insert(position, profile)
-        self.window.insert_profile(profile, position)
-        self.window.set_active_profile_index(position)
-        self.save()
+        try:
+            self.profiles.insert(position, profile)
+        except ProfileExistsError:
+            import gtk
+            dialog = gtk.MessageDialog(
+                parent=None,
+                flags=gtk.DIALOG_MODAL,
+                type=gtk.MESSAGE_ERROR,
+                buttons=gtk.BUTTONS_CLOSE)
+                
+            dialog.set_markup("<span weight=\"bold\" size=\"large\">Sorry! A profile with the name <span style=\"italic\">{0}</span> already exists!</span>\n\nPlease choose a different name!".format(profile.name))
+                
+            res = dialog.run()
+            dialog.destroy()
+        else:
+            self.window.insert_profile(profile, position)
+            self.window.set_active_profile_index(position)
+            self.save()
 
     def frontend_remove_profile(self, sender, position):
         """ User removed a profile using the "remove profile" button """
