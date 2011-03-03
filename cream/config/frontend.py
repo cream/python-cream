@@ -103,8 +103,18 @@ class CreamFrontend(ConfigurationDialog):
 
     def on_remove_profile(self, sender):
         """ User clicked the "remove profile" button """
-        if dialogs.YesNoDialog("Are you sure you want to delete this profile?\n"
-                               "It cannot be recovered.").run():
+        
+        dialog = gtk.MessageDialog(
+                parent=None,
+                flags=gtk.DIALOG_MODAL,
+                type=gtk.MESSAGE_QUESTION,
+                buttons=gtk.BUTTONS_YES_NO)
+                
+        dialog.set_markup("<span weight=\"bold\" size=\"large\">Are you sure that you want to remove profile <span style=\"italic\">{0}</span>?</span>\n\nYou will lose all data connected to this profile and won't be able to restore a previously removed profile!".format(self.profiles[self.profile_selector.get_active()]))
+                
+        res = dialog.run()
+        dialog.destroy()
+        if res == gtk.RESPONSE_YES:
             self.emit('remove-profile', self.profile_selector.get_active())
 
     def on_new_profile_added(self, sender):
