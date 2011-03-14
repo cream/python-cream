@@ -104,7 +104,7 @@ class ProfileList(list):
         if not isinstance(profile, ConfigurationProfile):
             profile = ConfigurationProfile.fromdict(profile, self.default)
 
-        old_profile = self.by_name(profile.name)
+        _, old_profile = self.find_by_name(profile.name)
         if old_profile is not None:
             if not overwrite:
                 raise ProfileExistsError(profile)
@@ -117,14 +117,17 @@ class ProfileList(list):
         self.insert(len(self), *args, **kwargs)
     add = append
 
-    def by_name(self, name):
+    def find_by_name(self, name):
         """
-        Returns the `Profile` instance holding `name` as `name` attribute
-        (or `None` if no such profile exists)
+        Returns a `(index, profile)` tuple being the `Profile` instance holding
+        `name` as `name` attribute and its index in this list.
+
+        If no such profile exists, returns a `(None, None)` tuple instead.
         """
-        for profile in self:
+        for index, profile in enumerate(self):
             if profile.name == name:
-                return profile
+                return index, profile
+        return None, None
 
     def _use(self, profile):
         if isinstance(profile, int):
@@ -144,7 +147,6 @@ class Configuration(_Configuration):
     """
     backend = CreamXMLBackend
     profiles = ()
-    _ingore_frontend = False
 
     @cached_property
     def frontend(self):
@@ -261,9 +263,9 @@ class Configuration(_Configuration):
                 flags=gtk.DIALOG_MODAL,
                 type=gtk.MESSAGE_ERROR,
                 buttons=gtk.BUTTONS_CLOSE)
-                
+
             dialog.set_markup("<span weight=\"bold\" size=\"large\">Sorry! A profile with the name <span style=\"italic\">{0}</span> already exists!</span>\n\nPlease choose a different name!".format(profile.name))
-                
+
             res = dialog.run()
             dialog.destroy()
         else:
