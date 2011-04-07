@@ -43,7 +43,7 @@ class ConfigurationFeature(Feature):
     autosave = True
 
     def __init__(self, component, read=True):
-        
+
         self.component_ref = weakref.ref(component)
 
         if read == True or read == 'true':
@@ -123,7 +123,8 @@ class ExtensionFeature(Feature):
 
         from cream.extensions import ExtensionManager
         component.extension_manager = ExtensionManager(
-            [os.path.join(component.context.working_directory, directory)],
+            [os.path.join(component.context.get_path(), directory),
+             os.path.join(component.context.get_user_path(), 'extensions')],
             component.extension_interface
         )
 
