@@ -74,6 +74,8 @@ class CreamXMLBackend(dict, Backend):
         self.path = path
 
         self.profile_dir = os.path.join(self.path, PROFILE_DIR)
+        if not os.path.exists(self.profile_dir):
+            os.makedirs(self.profile_dir)
 
 
     def read_scheme(self):
@@ -133,10 +135,20 @@ class CreamXMLBackend(dict, Backend):
         return static_options, profiles
 
 
-    def save(self, profile_list, fields):
+    def save_profile(self, profile, index, selected):
 
-        if not os.path.exists(self.profile_dir):
-            os.makedirs(self.profile_dir)
+        if not profile.is_editable:
+            return
+
+        filename = os.path.join(self.profile_dir, slugify(profile.name)+'.xml')
+        serialize_to_file({
+            'name' : profile.name,
+            'values' : profile.values,
+            'position' : index,
+            'selected' : selected
+        }, filename, tag=PROFILE_ROOT_NODE)
+
+    def save(self, profile_list, fields):
 
         # get all saved profiles
         saved_profiles = {}
@@ -145,19 +157,10 @@ class CreamXMLBackend(dict, Backend):
             saved_profiles[name] = os.path.join(self.profile_dir, profile)
 
         for index, profile in enumerate(profile_list):
-            if not profile.is_editable: continue
+            self.save_profile(profile, index, profile_list.active == profile)
 
-            filename = os.path.join(os.path.join(self.path, PROFILE_DIR), slugify(profile.name)+'.xml')
-
-            serialize_to_file({
-                'name' : profile.name,
-                'values' : profile.values,
-                'position' : index,
-                'selected' : profile_list.active == profile
-            }, filename, tag=PROFILE_ROOT_NODE)
-
-            if profile.name.lower() in saved_profiles:
-                del saved_profiles[profile.name.lower()]
+            if slugify(profile.name.lower()) in saved_profiles:
+                del saved_profiles[slugify(profile.name.lower())]
 
         # `saved_profiles` now contains profiles, which have been removed
         # but are still present in the filesystem. Remove them.

@@ -254,7 +254,7 @@ class Configuration(_Configuration):
         self.use_profile(index)
         self._ignore_frontend = False
         self.window.editable = self.profiles.active.is_editable
-        self.save()
+        self.save_profile(index)
 
     def frontend_add_profile(self, sender, profile_name, position):
         """ User added a profile using the "add profile" button """
@@ -275,13 +275,12 @@ class Configuration(_Configuration):
         else:
             self.window.insert_profile(profile, position)
             self.window.set_active_profile_index(position)
-            self.save()
+            self.save_profile(position)
 
     def frontend_remove_profile(self, sender, position):
         """ User removed a profile using the "remove profile" button """
         del self.profiles[position]
         self.window.remove_profile(position)
-        self.save()
 
 
     def run_frontend(self):
@@ -293,9 +292,10 @@ class Configuration(_Configuration):
 
 
     # BACKEND
-    def save(self):
+    def save_profile(self, index):
         self.emit('pre-save')
-        self.backend_instance.save(self.profiles, self.fields)
+        profile = self.profiles[index]
+        self.backend_instance.save_profile(profile, index, self.profiles.active == profile)
 
 
 
