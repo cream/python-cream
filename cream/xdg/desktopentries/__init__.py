@@ -18,7 +18,7 @@
 import os
 from glob import iglob
 from future_builtins import map
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoOptionError
 from functools import partial
 
 SECTION = 'Desktop Entry'
@@ -54,10 +54,13 @@ class DesktopEntry(ConfigParser):
             return self.get_default(key).strip(';').split(';') # TODO: comma separated?
 
     def get_locale(self, key, locale=''):
-        if not locale:
-            return self.get_default(key)
-        else:
-            return self.get_default('%s[%s]' % key)
+        try:
+            if not locale:
+                return self.get_default(key)
+            else:
+                return self.get_default('%s[%s]' % key)
+        except NoOptionError:
+            return None
 
     type = property(partial(get_default, key='Type'))
     version = property(partial(get_default, key='Version'))
