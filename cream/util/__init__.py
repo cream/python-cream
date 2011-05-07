@@ -123,7 +123,7 @@ class cached_property(object):
         if obj is None:
             return self
         value = self.func(obj)
-        if self.not_none and value is not None:
+        if not (self.not_none and value is None):
             setattr(obj, self.__name__, value)
         return value
 
