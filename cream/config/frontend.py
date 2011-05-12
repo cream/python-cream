@@ -18,7 +18,6 @@
 import os
 import gtk
 from gpyconf.frontends.gtk import ConfigurationDialog
-from cream.gui import dialogs
 from cream.util import joindir
 
 MODE_NORMAL = 1
