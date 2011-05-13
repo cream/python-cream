@@ -19,6 +19,11 @@ import os
 import itertools
 from lxml.etree import parse as parse_xml_file
 
+import cream.util
+
+
+MANIFEST_FILE = 'manifest.xml'
+
 class ManifestException(BaseException):
     pass
 
@@ -202,7 +207,7 @@ class Manifest(dict):
         return "<Manifest '{0}'>".format(self._path)
 
 
-class ManifestDB:
+class ManifestDB(object):
 
     def __init__(self, paths, type=None):
         
@@ -219,23 +224,21 @@ class ManifestDB:
     def scan(self):
 
         for path in self.paths:
-            for directory, directories, files in os.walk(os.path.abspath(path)):
-                for file_ in files:
-                    if file_ == 'manifest.xml':
-                        manifest = Manifest(os.path.join(directory, file_))
-                        if not self.type or manifest['type'] == self.type:
-                            yield manifest
+            for file_ in cream.util.walkfiles(os.path.abspath(path)):
+                filename = os.path.split(file_)[1]
+                if filename == MANIFEST_FILE:
+                    manifest = Manifest(file_)
+                    if not self.type or manifest['type'] == self.type:
+                        yield manifest
 
 
-    def get(self, **args):
+    def get(self, **kwargs):
         
         self.manifests, manifests = itertools.tee(self.manifests)
 
-        for m in manifests:
-            if m:
-                for k, v in args.iteritems():
-                    if m.has_key(k):
-                        if not m[k] == v:
-                            break
-                else:
-                    yield m
+        for manifest in manifests:
+            for key, value in kwargs.iteritems():
+                if not manifest.get(key, None) == value:
+                    break
+            else:
+                yield manifest
