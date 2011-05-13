@@ -16,6 +16,7 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 import os
+import itertools
 from lxml.etree import parse as parse_xml_file
 
 class ManifestException(BaseException):
@@ -201,10 +202,10 @@ class Manifest(dict):
         return "<Manifest '{0}'>".format(self._path)
 
 
-class ManifestDB(object):
+class ManifestDB:
 
     def __init__(self, paths, type=None):
-
+        
         if isinstance(paths, basestring):
             self.paths = [paths]
         else:
@@ -212,46 +213,29 @@ class ManifestDB(object):
 
         self.type = type
 
-        self.by_name = {}
-        self.by_id = {}
-
-        self.scan()
+        self.manifests = self.scan()
 
 
     def scan(self):
 
         for path in self.paths:
-            try:
-                res = self._scan(path, self.type)
-
-                for i in res:
-                    self.by_name[i['name']] = i
-                    self.by_id[i['id']] = i
-            except:
-                pass
+            for directory, directories, files in os.walk(os.path.abspath(path)):
+                for file_ in files:
+                    if file_ == 'manifest.xml':
+                        manifest = Manifest(os.path.join(directory, file_))
+                        if not self.type or manifest['type'] == self.type:
+                            yield manifest
 
 
-    def get_by_name(self, name):
-        return self.by_name[name]
+    def get(self, **args):
+        
+        self.manifests, manifests = itertools.tee(self.manifests)
 
-
-    def get_by_id(self, id):
-        return self.by_id[id]
-
-
-    def _scan(self, path, type=None):
-
-        path = os.path.abspath(path)
-        files = os.listdir(path)
-        res = []
-
-        for file in files:
-            if os.path.isdir(os.path.join(path, file)):
-                res.extend(self._scan(os.path.join(path, file), type))
-            else:
-                if file == 'manifest.xml':
-                    m = Manifest(os.path.join(path, file))
-                    if not type or m['type'] == type:
-                        res.append(m)
-
-        return res
+        for m in manifests:
+            if m:
+                for k, v in args.iteritems():
+                    if m.has_key(k):
+                        if not m[k] == v:
+                            break
+                else:
+                    yield m
