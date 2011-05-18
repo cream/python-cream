@@ -93,13 +93,13 @@ class HotkeyFeature(Feature, gobject.GObject):
         self.component().hotkeys = self
 
         try:
-            self.manager = cream.ipc.get_object('org.cream.HotkeyManager', '/org/cream/HotkeyManager')
+            self.manager = cream.ipc.get_object('org.cream.Hotkeys', '/org/cream/Hotkeys')
         except DBusException:
             import warnings
             warnings.warn("Could not connect to the cream hotkey manager")
             return
 
-        self.broker = cream.ipc.get_object('org.cream.HotkeyManager', self.manager.register(), interface='org.cream.HotkeyManager.broker')
+        self.broker = cream.ipc.get_object('org.cream.Hotkeys', self.manager.register(), interface='org.cream.Hotkeys.broker')
         self.broker.connect_to_signal('hotkey_activated', self.hotkey_activated_cb)
 
         for name, field in self.component().config.fields.iteritems():
