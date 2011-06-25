@@ -55,7 +55,7 @@ class ExtensionManager(object):
                    self.extensions.by_name.itervalues())
 
     def load_by_name(self, name, interface=None, *args, **kwargs):
-        ext = self.extensions.get_by_name(name)
+        ext = self.extensions.get(name=name).next()
         return self._load(ext, interface)
 
 
