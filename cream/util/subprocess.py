@@ -42,8 +42,13 @@ class Subprocess(gobject.GObject):
 
         self.process = None
         self.pid = None
-        self.stdout = None
-        self.stderr = None
+        
+        if not fork:
+            self.stdout = True
+            self.stderr = True
+        else:
+            self.stdout = False
+            self.stderr = False
 
         self.command = command
         self.name = name
@@ -57,10 +62,16 @@ class Subprocess(gobject.GObject):
         """ Run the process. """
 
         process_data = gobject.spawn_async(self.command,
-                flags=gobject.SPAWN_SEARCH_PATH|gobject.SPAWN_DO_NOT_REAP_CHILD
+                flags=gobject.SPAWN_SEARCH_PATH|gobject.SPAWN_DO_NOT_REAP_CHILD,
+                standard_output=self.stdout,
+                standard_error=self.stderr
                 )
 
         self.pid = process_data[0]
+        self.stdout = os.fdopen(process_data[2])
+        self.stderr = os.fdopen(process_data[3])
+        
+        print self.stderr
 
         self.watch = gobject.child_watch_add(self.pid, self.exited_cb)
 
