@@ -22,7 +22,7 @@ import sys
 from cream.util import console
 
 DEBUG = 5
-NOTE = 4
+INFO = 4
 WARNING = 3
 ERROR = 2
 FATAL = 1
@@ -31,7 +31,7 @@ VERBOSITY = 3
 
 COLORS = {
     DEBUG: console.COLOR_YELLOW,
-    NOTE: console.COLOR_GREEN,
+    INFO: console.COLOR_GREEN,
     WARNING: console.COLOR_BLUE,
     ERROR: console.COLOR_RED,
     FATAL: console.COLOR_RED_BOLD,
@@ -39,7 +39,7 @@ COLORS = {
 
 SHORTS = {
     DEBUG: 'DBG',
-    NOTE: 'NTC',
+    INFO: 'INF',
     WARNING: 'WRN',
     ERROR: 'ERR',
     FATAL: 'FTL',
@@ -58,8 +58,8 @@ class Messages(object):
         self.process_message(DEBUG, message)
 
 
-    def notice(self, message):
-        self.process_message(NOTE, message)
+    def info(self, message):
+        self.process_message(INFO, message)
 
 
     def warning(self, message):
