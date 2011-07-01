@@ -84,7 +84,7 @@ class Manifest(dict):
         self['type'] = expand_ns(component.get('type'))
         self['name'] = component.get('name')
         self['version'] = component.get('version')
-        self['entry'] = expand_path(component.get('entry'))
+        self['exec'] = component.get('exec')
 
         # Licenses:
         self['licenses'] = []
