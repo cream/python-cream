@@ -15,156 +15,230 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-import os
-import gtk
-from gpyconf.frontends.gtk import ConfigurationDialog
+
+from gi.repository import GObject as gobject, Gtk as gtk
+
+from cream.config import widgets
 from cream.util import joindir
 
+
 MODE_NORMAL = 1
-MODE_EDIT = 2
-
-class CreamFrontend(ConfigurationDialog):
-    _editable = True
-    _new_events = ('profile-changed', 'add-profile', 'remove-profile')
-
-    def __init__(self, *args, **kwargs):
-
-        self.profiles = []
-        self._mode = MODE_NORMAL
-
-        ConfigurationDialog.__init__(self, title='Configuration', *args, **kwargs)
-        self.add_events(self._new_events)
-
-        self.interface = gtk.Builder()
-        self.interface.add_from_file(joindir(__file__, 'interface/profiles.ui'))
-
-        self.profile_box_edit = self.interface.get_object('profile_box_edit')
-        self.profile_entry = self.interface.get_object('profile_entry')
-        self.profile_save = self.interface.get_object('profile_save')
-        self.profile_cancel = self.interface.get_object('profile_cancel')
-
-        self.profile_box_normal = self.interface.get_object('profile_box_normal')
-        self.profile_selector = self.interface.get_object('profile_selector')
-        self.profile_add = self.interface.get_object('profile_add')
-        self.profile_remove = self.interface.get_object('profile_remove')
-
-        self.profiles_storage = self.interface.get_object('profiles_storage')
-
-        self.profile_selector.connect('changed', self.on_profile_changed)
-        self.profile_entry.connect('activate', self.change_mode)
-        self.profile_entry.connect('activate', self.on_new_profile_added)
-        self.profile_add.connect('clicked', self.change_mode)
-        self.profile_save.connect('clicked', self.change_mode)
-        self.profile_save.connect('clicked', self.on_new_profile_added)
-        self.profile_cancel.connect('clicked', self.change_mode)
-        self.profile_remove.connect('clicked', self.on_remove_profile)
-
-        self.alignment = gtk.Alignment(1, 0.5, 1, 1)
-        self.alignment.add(self.profile_box_normal)
-
-        self.layout.pack_start(self.alignment, False, False, 0)
-        self.layout.reorder_child(self.alignment, 0)
-
-    def add_profiles(self, profiles):
-        """ Add a list or tuple of `Profile`s to the profile selector """
-        for profile in profiles:
-            self.add_profile(profile)
-
-    def add_profile(self, profile):
-        """ Add a `Profile` instance to the profile selector """
-        self.profiles_storage.append([profile.name])
-        self.profiles.append(profile.name)
-
-    def insert_profile(self, profile, position):
-        """ Insert `profile` at `position` into the profile selector """
-        self.profiles_storage.insert(position, [profile.name])
-        self.profiles.insert(position, profile.name)
-
-    def remove_profile(self, position):
-        """ Remove entry at `position` from the profile selector """
-        iter = self.profiles_storage.get_iter_from_string(str(position))
-        # huaa?
-        self.profiles_storage.remove(iter)
-        self.profile_selector.set_active(position-1)
+MODE_ADD = 2
 
 
-    # CALLBACKS
-    def on_profile_changed(self, widget):
-        """ User changed the profile-selector dropdown """
-        index = widget.get_active()
-        if index < 0:
-            # empty profile selector (should only happen at startup)
-            return
-        self.emit('profile-changed',
-            self.profiles_storage.get_value(widget.get_active_iter(), 0),
-            index)
+def get_widget_for_value(value):
+
+    if isinstance(value, bool):
+        return widgets.BooleanWidget
+    elif isinstance(value, int):
+        return widgets.IntegerWidget
+    elif isinstance(value, float):
+        return widgets.FloatWidget
+    elif isinstance(value, basestring):
+        return widgets.CharWidget
+    elif isinstance(value, list):
+        return widgets.MultiOptionWidget
 
 
-    def on_remove_profile(self, sender):
-        """ User clicked the "remove profile" button """
-        
-        dialog = gtk.MessageDialog(
-                parent=None,
-                flags=gtk.DIALOG_MODAL,
-                type=gtk.MESSAGE_QUESTION,
-                buttons=gtk.BUTTONS_YES_NO)
-                
-        dialog.set_markup("<span weight=\"bold\" size=\"large\">Are you sure that you want to remove profile <span style=\"italic\">{0}</span>?</span>\n\nYou will lose all data connected to this profile and won't be able to restore a previously removed profile!".format(self.profiles[self.profile_selector.get_active()]))
-                
-        res = dialog.run()
-        dialog.destroy()
-        if res == gtk.RESPONSE_YES:
-            self.emit('remove-profile', self.profile_selector.get_active())
+class ConfigurationDialog(gobject.GObject):
 
-    def on_new_profile_added(self, sender):
-        """ User is done with editing the Entry """
-        name = self.profile_entry.get_text()
-        index = self.profile_selector.get_active() + 1
-        if name:
-            self.emit('add-profile', name, index)
+    __gsignals__ = {
+        'value-changed': (gobject.SignalFlags.RUN_LAST, None, (str, object)),
+        'profile-selected': (gobject.SignalFlags.RUN_LAST, None, (str, )),
+        'profile-added': (gobject.SignalFlags.RUN_LAST, None, (str, )),
+        'profile-removed': (gobject.SignalFlags.RUN_LAST, None, (str, ))
+    }
+
+    def __init__(self, profiles):
+
+        gobject.GObject.__init__(self)
+
+        self.profiles = profiles
+        self.widgets = {}
+
+        interface = gtk.Builder()
+        interface.add_from_file(joindir(__file__, 'interface/dialog.ui'))
+
+        self.dialog = interface.get_object('dialog')
+        self.profile_box = interface.get_object('profile_box')
+        self.settings_grid = interface.get_object('settings_grid')
+        self.profile_store = interface.get_object('profile_store')
+
+        self.profile_normal = interface.get_object('profile_normal')
+        self.profile_selector = interface.get_object('profile_selector')
+        self.button_add = interface.get_object('button_add')
+        self.button_remove = interface.get_object('button_remove')
+
+        self.profile_add = interface.get_object('profile_add')
+        self.profile_entry = interface.get_object('profile_entry')
+        self.button_save = interface.get_object('button_save')
+        self.button_cancel = interface.get_object('button_cancel')
 
 
-    def change_mode(self, sender):
-        """ User clicked on add or save button. Change the mode. """
-        max_height = max(self.profile_entry.get_allocation()[3],
-                         self.profile_selector.get_allocation()[3]
-                        )
-        self.alignment.set_size_request(-1, max_height)
+        # TODO: do this in Glade, stupid thing is crashing
+        cell = gtk.CellRendererText()
+        self.profile_selector.pack_start(cell, False)
+        self.profile_selector.add_attribute(cell, "text", 0)
 
-        box = [widget for widget in self.alignment][0]
-        if self._mode == MODE_NORMAL:
-            self.profile_entry.set_text('')
-            self.alignment.remove(box)
-            self.alignment.add(self.profile_box_edit)
-            self.profile_entry.grab_focus()
-            self._mode = MODE_EDIT
-        else:
-            self.alignment.remove(box)
-            self.alignment.add(self.profile_box_normal)
-            self._mode = MODE_NORMAL
+
+        self.dialog.connect('delete-event', lambda *x: self.dialog.hide())
+
+        self.profile_selector.connect('changed', self.on_profile_selected)
+        self.button_add.connect('clicked', self.change_mode, MODE_ADD)
+        self.button_remove.connect('clicked', self.on_profile_removed)
+        self.button_save.connect('clicked', self.on_profile_added)
+        self.button_cancel.connect('clicked', self.change_mode, MODE_NORMAL)
+        self.profile_entry.connect('activate', self.on_profile_added)
+
+
+        self.profile_box.pack_start(self.profile_normal, True, True, 0)
+
+        self.dialog.set_default_size(250, 150)
+
+
+        for row, key in enumerate(sorted(self.profiles.default_profile.keys)):
+            widget = self.init_widget(key)
+
+            widget.connect('value-changed', self.on_value_changed, key)
+            self.widgets[key] = widget
+
+            self.settings_grid.attach(gtk.Label(key), 0, row+1, 1, 1)
+            self.settings_grid.attach(widget.widget, 1, row+1, 1, 1)
+
+        self.settings_grid.show_all()
+        self.update_profile_list()
+
+
+    def init_widget(self, key):
+
+        value = self.profiles.selected_profile.get_value(key)
+        widget = get_widget_for_value(value)
+
+        return widget(value)
+
 
     @property
-    def editable(self):
-        """
-        `True` if the window is 'editable' (an editable profile is selected)
-        """
-        return self._editable
+    def selected_profile(self):
+        index = self.profile_selector.get_active()
+        return list(self.profiles)[index]
 
-    @editable.setter
-    def editable(self, value):
-        # set widgets sensitive (or not)
-        if value:
-            if not self.editable:
-                self.content.set_sensitive(True)
-                self.profile_remove.set_sensitive(True)
+
+    def change_mode(self, widget, mode):
+
+        if mode == MODE_NORMAL:
+            self.profile_entry.set_text('')
+            self.profile_box.remove(self.profile_add)
+            self.profile_box.pack_start(self.profile_normal, True, True, 0)
         else:
-            self.content.set_sensitive(False)
-            self.profile_remove.set_sensitive(False)
-        self._editable = value
+            self.profile_box.remove(self.profile_normal)
+            self.profile_box.pack_start(self.profile_add, True, True, 0)
+            self.profile_entry.grab_focus()
 
-    def set_active_profile_index(self, index):
-        self.profile_selector.set_active(index)
+
+    def update_profile_list(self):
+
+        self.profile_store.clear()
+
+        for i, profile in enumerate(self.profiles):
+            if profile.selected:
+                selected_index = i
+            self.profile_store.append((profile.name,))
+        self.profile_selector.set_active(selected_index)
+
+        if len(self.profiles) == 1:
+            self.profile_selector.set_sensitive(False)
+        else:
+            self.profile_selector.set_sensitive(True)
+
+
+    def update_values(self):
+
+        for key in self.profiles.selected_profile.keys:
+            value = self.profiles.selected_profile.get_value(key)
+            self.widgets[key].set_value(value)
+
+
+    def update_sensitivity(self):
+
+        if self.profiles.selected_profile.is_default:
+            self.button_remove.set_sensitive(False)
+            self.settings_grid.set_sensitive(False)
+        else:
+            self.button_remove.set_sensitive(True)
+            self.settings_grid.set_sensitive(True)
+
+
+    def on_profile_selected(self, widget):
+
+        self.emit('profile-selected', self.selected_profile.name)
+
+        self.update_sensitivity()
+        self.update_values()
+
+
+    def on_profile_added(self, widget):
+
+        self.emit('profile-added', self.profile_entry.get_text())
+
+        self.change_mode(None, MODE_NORMAL)
+        self.update_profile_list()
+
+
+    def on_profile_removed(self, widget):
+
+        self.emit('profile-removed', self.selected_profile.name)
+        self.update_profile_list()
+
+
+    def on_value_changed(self, widget, value, key):
+        self.emit('value-changed', key, value)
+
 
     def run(self):
-        ConfigurationDialog.run(self)
-        self.dialog.destroy()
+        return self.dialog.run()
+
+
+class Frontend(gobject.GObject):
+
+    __gsignals__ = {
+        'value-changed': (gobject.SignalFlags.RUN_LAST, None, (str, object)),
+        'profile-selected': (gobject.SignalFlags.RUN_LAST, None, (str, )),
+        'profile-added': (gobject.SignalFlags.RUN_LAST, None, (str, )),
+        'profile-removed': (gobject.SignalFlags.RUN_LAST, None, (str, )),
+    }
+
+    def __init__(self, profiles):
+
+        gobject.GObject.__init__(self)
+
+
+        self.profiles = profiles
+        self.dialog = ConfigurationDialog(profiles)
+
+        self.dialog.connect('profile-selected', self.on_profile_selected)
+        self.dialog.connect('profile-added', self.on_profile_added)
+        self.dialog.connect('profile-removed', self.on_profile_removed)
+        self.dialog.connect('value-changed', self.on_value_changed)
+
+
+    def run(self):
+        return self.dialog.run()
+
+
+    def on_profile_selected(self, dialog, profile):
+        self.emit('profile-selected', profile)
+
+
+    def on_profile_added(self, dialog, profile):
+
+        profiles = map(lambda p: p.name, self.profiles)
+        if profile not in profiles:
+            self.emit('profile-added', profile)
+
+
+    def on_profile_removed(self, dialog, profile):
+        self.emit('profile-removed', profile)
+
+
+    def on_value_changed(self, dialog, key, value):
+        self.emit('value-changed', key, value)

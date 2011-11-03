@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.cream.melange">
+    <key type="as" name="profiles">
+      <default>[]</default>
+    </key>
+    <key type="b" name="profile-selected">
+      <default>false</default>
+    </key>
+
+
+    <key type="b" name="awesome">
+      <default>false</default>
+    </key>
+    <key name="number" type="i">
+      <range min="1" max="100"/>
+      <default>10</default>
+    </key>
+    <key name="description" type="s">
+      <default>'Text'</default>
+    </key>
+        <key name="float" type="d">
+      <default>3.14</default>
+    </key>
+  </schema>
+</schemalist>
