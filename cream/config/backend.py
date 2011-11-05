@@ -70,10 +70,6 @@ class Profiles(object):
         profile_names = self.default_profile.settings.get_value(KEY_PROFILES)
         profile_names = filter(lambda n: n != NAME_DEFAULT, list(profile_names))
 
-        if not profile_names:
-            # only default profile available
-            self.default_profile.selected = True
-
 
         for name in profile_names:
             self.add_profile(name)
@@ -81,6 +77,9 @@ class Profiles(object):
         for profile in self.profiles.itervalues():
             if profile.selected:
                 self.selected_profile = profile
+
+        if not self.selected_profile:
+            self.selected_profile = self.default_profile
 
 
     def __iter__(self):
