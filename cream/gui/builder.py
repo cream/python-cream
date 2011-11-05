@@ -15,7 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-from gtk import Builder
+from gi.repository import Gtk as gtk
 
 class GtkBuilderInterface(object):
     """
@@ -35,7 +35,7 @@ class GtkBuilderInterface(object):
     """
     def __init__(self, builder_file):
         self._builder_file = builder_file
-        self._builder_tree = Builder()
+        self._builder_tree = gtk.Builder()
         self._builder_tree.add_from_file(builder_file)
 
     def __getattr__(self, attr):

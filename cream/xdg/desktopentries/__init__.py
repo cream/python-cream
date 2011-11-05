@@ -94,7 +94,7 @@ class DesktopEntry(ConfigParser):
     url = property(partial(get_default, key='URL'))
 
 if __name__ == '__main__':
-    import gtk
+    from gi.repository import Gtk as gtk
     from gtkmenu import to_gtk
     menu = to_gtk(DesktopEntry.get_all())
     menu.popup(None, None, None, 1, 0)

@@ -21,8 +21,8 @@ from operator import attrgetter, itemgetter
 from subprocess import Popen
 from collections import defaultdict
 
-import gtk
-import gobject
+from gi.repository import Gtk as gtk
+from gi.repository import GObject as gobject
 
 KICK = re.compile('%[ifFuUck]')
 ICON_SIZE = 16

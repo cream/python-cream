@@ -66,7 +66,7 @@ class Module(Component, unique.UniqueApplication):
         
         signal.signal(signal.SIGTERM, self.signal_cb)
 
-        import gobject
+        from gi.repository import GObject as gobject
 
         if enable_threads:
             gobject.threads_init()
