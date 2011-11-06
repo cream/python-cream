@@ -21,9 +21,9 @@ from cream.config.backend import Backend
 
 class Configuration(object):
 
-    def __init__(self):
+    def __init__(self, schema):
 
-        self.backend = Backend('org.cream.melange')
+        self.backend = Backend(schema)
         self.frontend = Frontend(self.backend.profiles)
 
         self.frontend.connect('profile-selected', lambda f, p: self.backend.set_profile(p))
@@ -61,6 +61,6 @@ class Configuration(object):
 
 
 if __name__ == '__main__':
-    conf = Configuration()
+    conf = Configuration('org.cream.melange')
 
     conf.show_dialog()
