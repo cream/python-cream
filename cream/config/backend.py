@@ -220,6 +220,9 @@ class Backend(gobject.GObject):
         self.profiles.remove_profile(profile)
 
 
+    def get_value(self, key):
+        return self.profiles.get_value(key)
+
     def set_value(self, key, value):
         self.profiles.set_value(key, value)
 

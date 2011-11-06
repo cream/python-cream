@@ -45,7 +45,17 @@ class Configuration(object):
     def __getattr__(self, name):
 
         if name in self.backend:
-            return self.backend.profiles.get_value(name)
+            return self.backend.get_value(name)
+
+        raise AttributeError("No such attribute '{0}'".format(name))
+
+
+    def __setattr__(self, name, value):
+
+        if 'frontend' in self.__dict__ and name in self.backend:
+            return self.backend.set_value(name, value)
+        else:
+            return object.__setattr__(self, name, value)
 
         raise AttributeError("No such attribute '{0}'".format(name))
 
