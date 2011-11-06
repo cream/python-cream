@@ -47,6 +47,8 @@ class Configuration(object):
         if name in self.backend:
             return self.backend.profiles.get_value(name)
 
+        raise AttributeError("No such attribute '{0}'".format(name))
+
 
 if __name__ == '__main__':
     conf = Configuration()
