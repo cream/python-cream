@@ -39,6 +39,8 @@ def variant_from_python(obj):
         return glib.Variant('d', obj)
     elif isinstance(obj, basestring):
         return glib.Variant('s', obj)
+    elif isinstance(obj, list):
+        return glib.Variant('as', obj)
 
 
 
@@ -131,16 +133,19 @@ class Profiles(object):
         self.selected_profile = profile
 
 
+    def get_value(self, key):
+
+        return self.selected_profile.get_value(key)
+
+
     def set_value(self, key, value):
 
-        variant = variant_from_python(value)
-        self.selected_profile.set_value(key, variant)
+        self.selected_profile.set_value(key, value)
 
 
     def save(self):
 
-        profiles = glib.Variant('as', self.profiles.keys())
-        self.default_profile.set_value(KEY_PROFILES, profiles)
+        self.default_profile.set_value(KEY_PROFILES, list(self.profiles.keys()))
 
 
 class Profile(object):
@@ -181,7 +186,8 @@ class Profile(object):
 
 
     def set_value(self, key, value):
-        self.settings.set_value(key, value)
+        variant = variant_from_python(value)
+        self.settings.set_value(key, variant)
 
 
 class DefaultProfile(Profile):
@@ -222,3 +228,7 @@ class Backend(gobject.GObject):
 
         self.profiles.save()
         gio.Settings.sync()
+
+
+    def __contains__(self, name):
+        return name in self.profiles.default_profile.keys

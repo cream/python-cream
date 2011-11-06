@@ -31,11 +31,24 @@ class Configuration(object):
         self.frontend.connect('profile-removed', lambda f, p: self.backend.remove_profile(p))
         self.frontend.connect('value-changed', lambda f, k, v: self.backend.set_value(k, v))
 
+
+    def show_dialog(self):
+
         self.frontend.run()
 
+    def save(self):
 
         self.backend.save()
 
 
+
+    def __getattr__(self, name):
+
+        if name in self.backend:
+            return self.backend.profiles.get_value(name)
+
+
 if __name__ == '__main__':
-    Configuration()
+    conf = Configuration()
+
+    conf.show_dialog()
