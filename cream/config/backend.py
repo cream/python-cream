@@ -70,7 +70,7 @@ class Profiles(object):
         self.default_profile = self.add_profile(NAME_DEFAULT)
 
         profile_names = self.default_profile.settings.get_value(KEY_PROFILES)
-        profile_names = filter(lambda n: n != NAME_DEFAULT, list(profile_names))
+        profile_names = filter(lambda n: n != NAME_DEFAULT, variant_to_python(profile_names))
 
 
         for name in profile_names:
@@ -140,12 +140,13 @@ class Profiles(object):
 
     def set_value(self, key, value):
 
-        self.selected_profile.set_value(key, value)
+        if self.selected_profile.writeable:
+            self.selected_profile.set_value(key, value)
 
 
     def save(self):
-
         self.default_profile.set_value(KEY_PROFILES, list(self.profiles.keys()))
+
 
 
 class Profile(object):
@@ -186,6 +187,7 @@ class Profile(object):
 
 
     def set_value(self, key, value):
+
         variant = variant_from_python(value)
         self.settings.set_value(key, variant)
 
@@ -201,10 +203,11 @@ class DefaultProfile(Profile):
 
 class Backend(gobject.GObject):
 
-    def __init__(self, schema):
+    def __init__(self, schema, static):
 
         gobject.GObject.__init__(self)
 
+        self.static = static
         self.profiles = Profiles(schema)
 
 
@@ -224,7 +227,12 @@ class Backend(gobject.GObject):
         return self.profiles.get_value(key)
 
     def set_value(self, key, value):
-        self.profiles.set_value(key, value)
+
+        if key in self.static:
+            for profile in self.profiles:
+                profile.set_value(key, value)
+        else:
+            self.profiles.set_value(key, value)
 
 
     def save(self):

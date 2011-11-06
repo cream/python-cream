@@ -49,11 +49,12 @@ class ConfigurationDialog(gobject.GObject):
         'profile-removed': (gobject.SignalFlags.RUN_LAST, None, (str, ))
     }
 
-    def __init__(self, profiles):
+    def __init__(self, profiles, keys):
 
         gobject.GObject.__init__(self)
 
         self.profiles = profiles
+        self.keys = keys
         self.widgets = {}
 
         interface = gtk.Builder()
@@ -95,8 +96,7 @@ class ConfigurationDialog(gobject.GObject):
 
         self.dialog.set_default_size(250, 150)
 
-
-        for row, key in enumerate(sorted(self.profiles.default_profile.keys)):
+        for row, key in enumerate(sorted(self.keys)):
             widget = self.init_widget(key)
 
             widget.connect('value-changed', self.on_value_changed, key)
@@ -153,7 +153,7 @@ class ConfigurationDialog(gobject.GObject):
 
     def update_values(self):
 
-        for key in self.profiles.selected_profile.keys:
+        for key in self.keys:
             value = self.profiles.selected_profile.get_value(key)
             self.widgets[key].set_value(value)
 
@@ -207,13 +207,14 @@ class Frontend(gobject.GObject):
         'profile-removed': (gobject.SignalFlags.RUN_LAST, None, (str, )),
     }
 
-    def __init__(self, profiles):
+    def __init__(self, profiles, hidden):
 
         gobject.GObject.__init__(self)
 
 
         self.profiles = profiles
-        self.dialog = ConfigurationDialog(profiles)
+        keys = filter(lambda k: k not in hidden, self.profiles.default_profile.keys)
+        self.dialog = ConfigurationDialog(profiles, keys)
 
         self.dialog.connect('profile-selected', self.on_profile_selected)
         self.dialog.connect('profile-added', self.on_profile_added)

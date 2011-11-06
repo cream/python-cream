@@ -21,10 +21,15 @@ from cream.config.backend import Backend
 
 class Configuration(object):
 
-    def __init__(self, schema):
+    def __init__(self, schema, static=None, hidden=None):
 
-        self.backend = Backend(schema)
-        self.frontend = Frontend(self.backend.profiles)
+        if static is None:
+            static = []
+        if hidden is None:
+            hidden = []
+
+        self.backend = Backend(schema, static)
+        self.frontend = Frontend(self.backend.profiles, hidden)
 
         self.frontend.connect('profile-selected', lambda f, p: self.backend.set_profile(p))
         self.frontend.connect('profile-added', lambda f, p: self.backend.add_profile(p))
@@ -61,6 +66,8 @@ class Configuration(object):
 
 
 if __name__ == '__main__':
-    conf = Configuration('org.cream.melange')
+    conf = Configuration('org.cream.melange', hidden=['awesome'], static=['number'])
 
     conf.show_dialog()
+
+    conf.save()
