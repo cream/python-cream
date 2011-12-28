@@ -97,7 +97,7 @@ class CharWidget(Widget):
         self.widget.set_text(value)
 
 
-"""class MultiOptionWidget(Widget):
+class MultiOptionWidget(Widget):
 
     def __init__(self, value):
 
@@ -112,14 +112,39 @@ class CharWidget(Widget):
 
         Widget.__init__(self, ComboBoxText())
 
-        for v in value:
-            self.widget.liststore.append((v,))
+        self.value = value
+
+        self.update_liststore()
 
         self.widget.connect('changed', self.on_value_changed)
 
 
+    def update_liststore(self):
+
+        self.widget.disconnect('changed')
+        print 'update'
+        self.active_index = 0
+        self.widget.liststore.clear()
+        for k, v in self.value:
+            self.widget.liststore.append((v,))
+
+        print self.active_index
+        self.widget.set_active(self.active_index)
+
+        self.widget.connect('changed', self.on_value_changed)
+
     def get_value(self):
-        pass
+        print 'get_value'
+        i = self.active_index
+        active = self.widget.get_active()
+
+        self.value[i], self.value[active] = self.value[active], self.value[i]
+        self.active_index = active
+
+        return self.value
 
     def set_value(self, value):
-        pass"""
+
+        print 'set_value'
+        self.value = value
+        self.update_liststore()

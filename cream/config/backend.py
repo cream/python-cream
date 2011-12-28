@@ -39,8 +39,10 @@ def variant_from_python(obj):
         return glib.Variant('d', obj)
     elif isinstance(obj, basestring):
         return glib.Variant('s', obj)
-    elif isinstance(obj, list):
+    elif isinstance(obj, list) and not isinstance(obj[0], list):
         return glib.Variant('as', obj)
+    elif isinstance(obj, list):
+        return glib.Variant('aas', obj)
 
 
 
@@ -55,6 +57,8 @@ def variant_to_python(variant):
     elif variant.get_type_string() == 's':
         return variant.get_string()
     elif variant.get_type_string() == 'as':
+        return list(variant)
+    elif variant.get_type_string() == 'aas':
         return list(variant)
 
 

@@ -19,8 +19,11 @@
     <key name="description" type="s">
       <default>'Text'</default>
     </key>
-        <key name="float" type="d">
+      <key name="float" type="d">
       <default>3.14</default>
+    </key>
+    <key name="best-captain" type="aas">
+      <default>[['picard', 'Picard'], ['kirk', 'Kirk'], ['crunch', 'Crunch']]</default>
     </key>
   </schema>
 </schemalist>
