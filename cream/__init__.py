@@ -15,16 +15,13 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-import os
 import signal
 
+from gi.repository import Gtk as gtk, GObject as gobject
+
 from cream.util import cached_property
-from cream.util import unique
 
-from .base import Component, EXEC_MODE_PRODUCTIVE, EXEC_MODE_DEVELOPMENT
-from .path import CREAM_DIRS
-
-class Module(Component, unique.UniqueApplication):
+class Module(gtk.Application):
     """
     This is the baseclass for every Cream module. It bundles features
     you would need within your application or service, such as:
@@ -37,20 +34,11 @@ class Module(Component, unique.UniqueApplication):
 
     def __init__(self, module_id, *args, **kwargs):
 
-        manifest_path = ''
+        #Component.__init__(self, manifest_path, *args, exec_mode=exec_mode, **kwargs)
 
-        if os.getenv('CREAM_EXECUTION_MODE'):
-            exec_mode = EXEC_MODE_DEVELOPMENT
-        else:
-            exec_mode = EXEC_MODE_PRODUCTIVE
+        self.id = module_id
 
-            for directory in CREAM_DIRS:
-                path = os.path.join(directory, module_id, 'manifest.xml')
-                if os.path.exists(path):
-                    manifest_path = path
-
-        Component.__init__(self, manifest_path, *args, exec_mode=exec_mode, **kwargs)
-        unique.UniqueApplication.__init__(self, module_id)
+        gtk.Application.__init__(self, application_id=module_id)
 
 
     def main(self, enable_threads=True):
@@ -63,10 +51,8 @@ class Module(Component, unique.UniqueApplication):
                                with care!
         :type enable_threads: `bool`
         """
-        
-        signal.signal(signal.SIGTERM, self.signal_cb)
 
-        from gi.repository import GObject as gobject
+        signal.signal(signal.SIGTERM, self.signal_cb)
 
         if enable_threads:
             gobject.threads_init()
@@ -82,9 +68,9 @@ class Module(Component, unique.UniqueApplication):
     @cached_property
     def messages(self):
         from cream.log import Messages
-        return Messages(id=self.context.manifest['id'])
-    
-    
+        return Messages(id=self.id)
+
+
     def signal_cb(self, signal, frame):
         if signal == signal.SIGTERM:
             self.quit()
@@ -95,10 +81,9 @@ class Module(Component, unique.UniqueApplication):
 
         self.messages.debug("Shutting down quietly. Protesting wouldn't make sense. I'm just a machine. Grrrrmmm.")
 
-        unique.UniqueApplication.quit(self)
 
         # __finalize__ all registered features:
-        for feature in self._features:
-            feature.__finalize__()
+        #for feature in self._features:
+         #   feature.__finalize__()
 
         self._mainloop.quit()
