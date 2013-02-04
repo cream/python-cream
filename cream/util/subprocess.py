@@ -17,7 +17,7 @@
 
 import os
 import sys
-import gobject
+from gi.repository import GObject as gobject
 
 class Subprocess(gobject.GObject):
     """

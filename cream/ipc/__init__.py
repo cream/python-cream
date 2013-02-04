@@ -17,7 +17,7 @@
 
 from types import FunctionType
 
-import gobject
+from gi.repository import GObject as gobject
 
 import dbus
 import dbus.proxies

@@ -16,7 +16,7 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 import os
-import gobject
+from gi.repository import GObject as gobject
 import weakref
 
 FEATURES = dict()
@@ -52,7 +52,7 @@ class ConfigurationFeature(Feature):
             read = False
 
         Feature.__init__(self)
-
+        raise ConfigError()
         from .config import Configuration
 
         scheme_path = os.path.join(component.context.get_path(), 'configuration/scheme.xml')

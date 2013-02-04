@@ -34,8 +34,7 @@ import socket
 
 from lxml import etree
 
-import gobject
-import glib
+from gi.repository import GObject as gobject, GLib as glib
 
 from xmlserialize import serialize, unserialize
 

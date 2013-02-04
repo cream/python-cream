@@ -15,8 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-import gobject
-import gtk
+from gi.repository import GObject as gobject, Gtk as gtk
 import cairo
 import time
 import math
@@ -41,21 +40,20 @@ class CompositeBin(gtk.Fixed):
 
 
     def realize_cb(self, widget):
-        self.parent.connect_after('expose-event', self.expose_cb)
+        self.get_parent().connect_after('draw', self.draw_cb)
 
 
-    def expose_cb(self, widget, event):
+    def draw_cb(self, widget, ctx):
 
-        ctx = widget.window.cairo_create()
         ctx.set_operator(cairo.OPERATOR_OVER)
 
-        ctx.rectangle(*event.area)
+        #ctx.rectangle(*event.area)
         ctx.clip()
 
         for child in self.children:
             alloc = child.get_allocation()
             ctx.move_to(alloc.x, alloc.y)
-            ctx.set_source_pixmap(child.window, alloc.x, alloc.y)
+            #ctx.set_source_pixmap(child.window, alloc.x, alloc.y)
             ctx.paint()
 
         return False
