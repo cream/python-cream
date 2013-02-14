@@ -52,7 +52,7 @@ class ConfigurationFeature(Feature):
             read = False
 
         Feature.__init__(self)
-        raise ConfigError()
+
         from .config import Configuration
 
         scheme_path = os.path.join(component.context.get_path(), 'configuration/scheme.xml')

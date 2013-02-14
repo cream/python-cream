@@ -17,10 +17,12 @@
 
 # TODO: Rewrite this.
 
+from gi.repository import Gtk as gtk
+
 from gpyconf import Configuration as _Configuration
 from gpyconf.fields import Field
 
-from .backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
+from .backend import CreamXMLBackend
 from cream.util import flatten, cached_property
 
 PROFILE_EXISTS_MARKUP = '''<span weight="bold" size="large"> \
@@ -262,7 +264,6 @@ class Configuration(_Configuration):
         try:
             self.profiles.insert(position, profile)
         except ProfileExistsError:
-            import gtk
             dialog = gtk.MessageDialog(
                 parent=None,
                 flags=gtk.DIALOG_MODAL,
