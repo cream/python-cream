@@ -97,12 +97,13 @@ class CreamFrontend(ConfigurationDialog):
             return
         self.emit('profile-changed',
             self.profiles_storage.get_value(widget.get_active_iter(), 0),
-            index)
+            index
+        )
 
 
     def on_remove_profile(self, sender):
         """ User clicked the "remove profile" button """
-        
+
         dialog = gtk.MessageDialog(
                 parent=None,
                 flags=gtk.DialogFlags.MODAL,
@@ -110,7 +111,7 @@ class CreamFrontend(ConfigurationDialog):
                 buttons=gtk.ButtonsType.YES_NO)
 
         dialog.set_markup("<span weight=\"bold\" size=\"large\">Are you sure that you want to remove profile <span style=\"italic\">{0}</span>?</span>\n\nYou will lose all data connected to this profile and won't be able to restore a previously removed profile!".format(self.profiles[self.profile_selector.get_active()]))
-                
+
         res = dialog.run()
         dialog.destroy()
         if res == gtk.ResponseType.YES:
