@@ -50,6 +50,10 @@ class Context(object):
             user_path =os.path.join(XDG_DATA_HOME[0], 'cream', self.user_path_prefix, self.manifest['id'])
         else:
             user_path = os.path.join(XDG_DATA_HOME[0], 'cream', self.manifest['id'])
+
+        if not os.path.exists(user_path):
+            os.makedirs(user_path)
+
         return user_path
 
 
