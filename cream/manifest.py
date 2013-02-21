@@ -219,9 +219,8 @@ class ManifestDB(object):
         self.type = type
 
         self.manifests = {}
-        for manifest in self.scan():
-            self.manifests[manifest['id']] = manifest
 
+        self._manifest_scanner = self.scan()
 
     def scan(self):
 
@@ -231,20 +230,30 @@ class ManifestDB(object):
                 if filename == MANIFEST_FILE:
                     manifest = Manifest(file_)
                     if not self.type or manifest['type'] == self.type:
+                        self.manifests[manifest['id']] = manifest
                         yield manifest
 
-    def get_by_id(self, id):
-        return self.manifests[id]
 
-    """def get(self, **kwargs):
+    def get(self, **kwargs):
 
-        self.manifests, manifests = itertools.tee(self.manifests)
+        if 'id' in kwargs and kwargs['id'] in self.manifests:
+            return self.manifests[kwargs['id']]
 
-        for manifest in manifests:
+        for manifest in self.manifests.itervalues():
             for key, value in kwargs.iteritems():
-                if not manifest.get(key, None) == value:
-                    break
-            else:
-                yield manifest
-    """
+                if manifest.get(key, None) == value:
+                    return manifest
+
+        for manifest in self._manifest_scanner:
+            for key, value in kwargs.iteritems():
+                if manifest.get(key, None) == value:
+                    return manifest
+
+    def get_all(self):
+
+        # load all manifests
+        for manifest in self._manifest_scanner:
+            pass
+
+        return self.manifests.values()
 
