@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name = 'cream-libs',
-    version = '0.4.1',
+    version = '0.5',
     author = 'The Cream Project (http://cream-project.org)',
     url = 'http://github.com/cream/libs',
     packages = [
