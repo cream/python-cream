@@ -210,7 +210,7 @@ class Manifest(dict):
 class ManifestDB(object):
 
     def __init__(self, paths, type=None):
-        
+
         if isinstance(paths, basestring):
             self.paths = [paths]
         else:
@@ -218,8 +218,9 @@ class ManifestDB(object):
 
         self.type = type
 
-        self.manifests = self.scan()
+        self.manifests = {}
 
+        self._manifest_scanner = self.scan()
 
     def scan(self):
 
@@ -229,17 +230,30 @@ class ManifestDB(object):
                 if filename == MANIFEST_FILE:
                     manifest = Manifest(file_)
                     if not self.type or manifest['type'] == self.type:
+                        self.manifests[manifest['id']] = manifest
                         yield manifest
 
 
     def get(self, **kwargs):
-        
-        self.manifests, manifests = itertools.tee(self.manifests)
 
-        for manifest in manifests:
+        if 'id' in kwargs and kwargs['id'] in self.manifests:
+            return self.manifests[kwargs['id']]
+
+        for manifest in self.manifests.itervalues():
             for key, value in kwargs.iteritems():
-                if not manifest.get(key, None) == value:
-                    break
-            else:
-                yield manifest
+                if manifest.get(key, None) == value:
+                    return manifest
+
+        for manifest in self._manifest_scanner:
+            for key, value in kwargs.iteritems():
+                if manifest.get(key, None) == value:
+                    return manifest
+
+    def get_all(self):
+
+        # load all manifests
+        for manifest in self._manifest_scanner:
+            pass
+
+        return self.manifests.values()
 

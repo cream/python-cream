@@ -15,8 +15,8 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-import os
-import gtk
+from gi.repository import Gtk as gtk
+
 from gpyconf.frontends.gtk import ConfigurationDialog
 from cream.util import joindir
 
@@ -59,7 +59,7 @@ class CreamFrontend(ConfigurationDialog):
         self.profile_cancel.connect('clicked', self.change_mode)
         self.profile_remove.connect('clicked', self.on_remove_profile)
 
-        self.alignment = gtk.Alignment(1, 0.5, 1, 1)
+        self.alignment = gtk.Alignment.new(1, 0.5, 1, 1)
         self.alignment.add(self.profile_box_normal)
 
         self.layout.pack_start(self.alignment, False, False, 0)
@@ -97,23 +97,24 @@ class CreamFrontend(ConfigurationDialog):
             return
         self.emit('profile-changed',
             self.profiles_storage.get_value(widget.get_active_iter(), 0),
-            index)
+            index
+        )
 
 
     def on_remove_profile(self, sender):
         """ User clicked the "remove profile" button """
-        
+
         dialog = gtk.MessageDialog(
                 parent=None,
-                flags=gtk.DIALOG_MODAL,
-                type=gtk.MESSAGE_QUESTION,
-                buttons=gtk.BUTTONS_YES_NO)
-                
+                flags=gtk.DialogFlags.MODAL,
+                type=gtk.MessageType.QUESTION,
+                buttons=gtk.ButtonsType.YES_NO)
+
         dialog.set_markup("<span weight=\"bold\" size=\"large\">Are you sure that you want to remove profile <span style=\"italic\">{0}</span>?</span>\n\nYou will lose all data connected to this profile and won't be able to restore a previously removed profile!".format(self.profiles[self.profile_selector.get_active()]))
-                
+
         res = dialog.run()
         dialog.destroy()
-        if res == gtk.RESPONSE_YES:
+        if res == gtk.ResponseType.YES:
             self.emit('remove-profile', self.profile_selector.get_active())
 
     def on_new_profile_added(self, sender):
@@ -126,9 +127,9 @@ class CreamFrontend(ConfigurationDialog):
 
     def change_mode(self, sender):
         """ User clicked on add or save button. Change the mode. """
-        max_height = max(self.profile_entry.get_allocation()[3],
-                         self.profile_selector.get_allocation()[3]
-                        )
+        max_height = max(self.profile_entry.get_allocated_height(),
+            self.profile_selector.get_allocated_height()
+        )
         self.alignment.set_size_request(-1, max_height)
 
         box = [widget for widget in self.alignment][0]
