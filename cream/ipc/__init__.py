@@ -54,8 +54,8 @@ def get_object(modname, path=None, interface=None, bus=SESSION_BUS):
             interface
             )
 
-#class IpcError(Exception):
- #   pass
+class IpcError(Exception):
+    pass
 
 
 if gi.version_info[0] == 3 and gi.version_info[1] >= 8:
@@ -72,7 +72,7 @@ class ObjectMeta(dbus.service.InterfaceType, GObjectMeta):
         cls = dbus.service.InterfaceType.__new__(mcs, name, bases, dct)
 
         # begin to add all ipc methods already defined.
-        methods = cls._ipc_methods = {}
+        cls._ipc_methods = {}
         # TODO: we don't need that, cause noone should derive
         # from a Module subclass, do we?
         # first, get the ipc methods of the base classes
