@@ -17,6 +17,7 @@
 
 from types import FunctionType
 
+import gi
 from gi.repository import GObject as gobject
 
 import dbus
@@ -56,7 +57,14 @@ def get_object(modname, path=None, interface=None, bus=SESSION_BUS):
 #class IpcError(Exception):
  #   pass
 
-class ObjectMeta(dbus.service.InterfaceType, gobject.GObjectMeta):
+
+if gi.version_info[0] == 3 and gi.version_info[1] >= 8:
+    GObjectMeta = gobject.GObject.__class__
+else:
+    GObjectMeta = gobject.GObjectMeta
+
+
+class ObjectMeta(dbus.service.InterfaceType, GObjectMeta):
 
     def __new__(mcs, name, bases, dct):
 
