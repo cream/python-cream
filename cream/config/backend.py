@@ -19,9 +19,9 @@ import os
 
 from lxml.etree import XMLSyntaxError, parse as parse_xml
 from cream.util.string import slugify
+from cream.util.xmlserialize import unserialize_file, unserialize_atomic, serialize_to_file
 
 from gpyconf.backends import Backend
-from xmlserialize import unserialize_file, unserialize_atomic, serialize_to_file
 import gpyconf.fields
 import gpyconf.contrib.gtk
 import cream.config.fields

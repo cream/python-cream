@@ -36,7 +36,7 @@ from lxml import etree
 
 from gi.repository import GObject as gobject, GLib as glib
 
-from xmlserialize import serialize, unserialize
+from cream.util.xmlserialize import serialize, unserialize
 
 SOCKET_TEMPLATE = os.path.expanduser('~/.local/var/run/cream/%s.sock')
 PONG_TIMEOUT = 100 # = 100 ms.
