@@ -1,10 +1,10 @@
 from distutils.core import setup
 
 setup(
-    name = 'cream-libs',
+    name = 'python-cream',
     version = '0.5',
     author = 'The Cream Project (http://cream-project.org)',
-    url = 'http://github.com/cream/libs',
+    url = 'http://github.com/cream/python-cream',
     packages = [
         'cream',
         'cream.gui',
