@@ -23,18 +23,13 @@ from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
 from .path import CREAM_DIRS, XDG_DATA_HOME
 
-EXEC_MODE_PRODUCTIVE = 'EXEC_MODE_PRODUCTIVE'
-EXEC_MODE_DEVELOPMENT = 'EXEC_MODE_DEVELOPMENT'
-
 
 class Context(object):
 
-    def __init__(self, path, user_path_prefix=None, exec_mode=EXEC_MODE_PRODUCTIVE):
+    def __init__(self, path, user_path_prefix=''):
 
         self.path = path
         self.user_path_prefix = user_path_prefix
-
-        self.execution_mode = exec_mode
 
         self.environ = os.environ
         self.working_directory = os.path.dirname(self.path)
@@ -62,7 +57,7 @@ class Component(object):
 
     __manifest__ = 'manifest.xml'
 
-    def __init__(self, path=None, user_path_prefix=None, exec_mode=EXEC_MODE_PRODUCTIVE):
+    def __init__(self, path=None, user_path_prefix=''):
 
         if path:
             self.__manifest__ = path
@@ -72,7 +67,7 @@ class Component(object):
             self.__manifest__ = os.path.join(base_path, self.__manifest__)
 
         # Create context and load manifest file...
-        self.context = Context(self.__manifest__, user_path_prefix, exec_mode)
+        self.context = Context(self.__manifest__, user_path_prefix)
 
         try:
             os.chdir(self.context.working_directory)
