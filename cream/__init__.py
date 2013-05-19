@@ -21,8 +21,8 @@ import signal
 from cream.util import cached_property
 from cream.util import unique
 
-from .path import CREAM_DIRS
 from .base import Component
+from .path import CREAM_DATA_DIRS
 
 class Module(Component, unique.UniqueApplication):
     """
@@ -79,8 +79,8 @@ class Module(Component, unique.UniqueApplication):
     def messages(self):
         from cream.log import Messages
         return Messages(id=self.context.manifest['id'])
-    
-    
+
+
     def signal_cb(self, signal, frame):
         if signal == signal.SIGTERM:
             self.quit()

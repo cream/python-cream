@@ -21,7 +21,7 @@ from cream.util import get_source_file
 
 from .manifest import Manifest
 from .features import FEATURES, NoSuchFeature
-from .path import CREAM_DIRS, XDG_DATA_HOME
+from .path import CREAM_DATA_HOME, CREAM_DATA_DIR, VIRTUALENV_DATA_HOME
 
 
 class Context(object):
@@ -35,22 +35,51 @@ class Context(object):
         self.working_directory = os.path.dirname(self.path)
         self.manifest = Manifest(self.path)
 
+        self.in_virtualenv = 'VIRTUAL_ENV' in os.environ
+
 
     def get_path(self):
+        """
+        Returns the base path of this context.
+        """
         return os.path.dirname(self.path)
 
+    def get_system_path(self):
+        """
+        Returns the system wide data path for this context.
+        Files which are stored here are only to be read from.
+        """
+
+        return os.path.join(CREAM_DATA_DIR, self.manifest['id'])
 
     def get_user_path(self):
-        if self.user_path_prefix:
-            user_path =os.path.join(XDG_DATA_HOME[0], 'cream', self.user_path_prefix, self.manifest['id'])
-        else:
-            user_path = os.path.join(XDG_DATA_HOME[0], 'cream', self.manifest['id'])
+        """
+        Returns the user specific data path for this context.
+        Files which belong to this context can be saved here.
+        """
+
+        user_path = os.path.join(
+            CREAM_DATA_HOME,
+            self.user_path_prefix,
+            self.manifest['id']
+        )
 
         if not os.path.exists(user_path):
             os.makedirs(user_path)
 
         return user_path
 
+    def get_virtualenv_path(self):
+        """
+        Returns the data directory in the virtual env if present.
+        """
+        if not self.in_virtualenv: return ''
+
+        return os.path.join(
+            VIRTUALENV_DATA_HOME,
+            self.user_path_prefix,
+            self.manifest['id']
+        )
 
 class Component(object):
     """ Baseclass for e. g. cream.Module and cream.extensions.Extension. """

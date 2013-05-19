@@ -20,13 +20,17 @@ import os
 try:
     XDG_DATA_DIRS = os.environ['XDG_DATA_DIRS'].split(':')
     XDG_DATA_HOME = os.environ['XDG_DATA_HOME'].split(':')
-except:
-    XDG_DATA_DIRS = ['/usr/share', '/usr/local/share']
+except KeyError:
+    XDG_DATA_DIRS = ['/usr/share']
     XDG_DATA_HOME = [os.path.expanduser('~/.local/share')]
 
+CREAM_DATA_DIR = os.path.join(XDG_DATA_DIRS[0], 'cream')
+CREAM_DATA_HOME = os.path.join(XDG_DATA_HOME[0], 'cream')
 
-CREAM_DIRS = [os.path.join(d, 'cream') for d in XDG_DATA_HOME + XDG_DATA_DIRS]
+CREAM_DATA_DIRS = [os.path.join(d, 'cream') for d in XDG_DATA_DIRS + XDG_DATA_HOME]
 
-virtual_env = os.environ.get('VIRTUAL_ENV', '')
+VIRTUALENV_DATA_HOME = ''
+virtual_env = os.environ.get('VIRTUAL_ENV', False)
 if virtual_env:
-    CREAM_DIRS.append(os.path.join(virtual_env, 'share/cream/'))
+    VIRTUALENV_DATA_HOME = os.path.join(virtual_env, 'share/cream/')
+    CREAM_DATA_DIRS.append(VIRTUALENV_DATA_HOME)
