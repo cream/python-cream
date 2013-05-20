@@ -54,7 +54,7 @@ class Context(object):
         if self.use_id_in_path:
             return os.path.join(CREAM_DATA_DIR, self.manifest['id'])
         else:
-            return os.path.join(CREAM_DATA_DIR, self.manifest['name'].lower())
+            return os.path.join(CREAM_DATA_DIR, 'cream-' + self.manifest['name'].lower())
 
     def get_user_path(self):
         """
@@ -65,7 +65,7 @@ class Context(object):
         if self.use_id_in_path:
             dirname = self.manifest['id']
         else:
-            dirname = self.manifest['name'].lower()
+            dirname = 'cream-' + self.manifest['name'].lower()
 
         user_path = os.path.join(
             CREAM_DATA_HOME,
@@ -87,7 +87,7 @@ class Context(object):
         if self.use_id_in_path:
             dirname = self.manifest['id']
         else:
-            dirname = self.manifest['name'].lower()
+            dirname = 'cream-' + self.manifest['name'].lower()
 
         return os.path.join(
             VIRTUALENV_DATA_HOME,
