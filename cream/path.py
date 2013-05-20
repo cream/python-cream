@@ -24,13 +24,14 @@ except KeyError:
     XDG_DATA_DIRS = ['/usr/share']
     XDG_DATA_HOME = [os.path.expanduser('~/.local/share')]
 
-CREAM_DATA_DIR = os.path.join(XDG_DATA_DIRS[0], 'cream')
-CREAM_DATA_HOME = os.path.join(XDG_DATA_HOME[0], 'cream')
+CREAM_DATA_DIR = XDG_DATA_DIRS[0]
+CREAM_DATA_HOME = XDG_DATA_HOME[0]
 
-CREAM_DATA_DIRS = [os.path.join(d, 'cream') for d in XDG_DATA_DIRS + XDG_DATA_HOME]
+CREAM_DATA_DIRS = XDG_DATA_DIRS + XDG_DATA_HOME
 
 VIRTUALENV_DATA_HOME = ''
 virtual_env = os.environ.get('VIRTUAL_ENV', False)
 if virtual_env:
-    VIRTUALENV_DATA_HOME = os.path.join(virtual_env, 'share/cream/')
+    VIRTUALENV_DATA_HOME = os.path.join(virtual_env, 'share/')
     CREAM_DATA_DIRS.append(VIRTUALENV_DATA_HOME)
+

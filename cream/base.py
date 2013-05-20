@@ -26,7 +26,7 @@ from .path import CREAM_DATA_HOME, CREAM_DATA_DIR, VIRTUALENV_DATA_HOME
 
 class Context(object):
 
-    def __init__(self, path, user_path_prefix=''):
+    def __init__(self, path, user_path_prefix='', use_id_in_path=False):
 
         self.path = path
         self.user_path_prefix = user_path_prefix
@@ -35,6 +35,7 @@ class Context(object):
         self.working_directory = os.path.dirname(self.path)
         self.manifest = Manifest(self.path)
 
+        self.use_id_in_path = use_id_in_path
         self.in_virtualenv = 'VIRTUAL_ENV' in os.environ
 
 
@@ -50,7 +51,10 @@ class Context(object):
         Files which are stored here are only to be read from.
         """
 
-        return os.path.join(CREAM_DATA_DIR, self.manifest['id'])
+        if self.use_id_in_path:
+            return os.path.join(CREAM_DATA_DIR, self.manifest['id'])
+        else:
+            return os.path.join(CREAM_DATA_DIR, self.manifest['name'].lower())
 
     def get_user_path(self):
         """
@@ -58,10 +62,15 @@ class Context(object):
         Files which belong to this context can be saved here.
         """
 
+        if self.use_id_in_path:
+            dirname = self.manifest['id']
+        else:
+            dirname = self.manifest['name'].lower()
+
         user_path = os.path.join(
             CREAM_DATA_HOME,
             self.user_path_prefix,
-            self.manifest['id']
+            dirname
         )
 
         if not os.path.exists(user_path):
@@ -75,10 +84,15 @@ class Context(object):
         """
         if not self.in_virtualenv: return ''
 
+        if self.use_id_in_path:
+            dirname = self.manifest['id']
+        else:
+            dirname = self.manifest['name'].lower()
+
         return os.path.join(
             VIRTUALENV_DATA_HOME,
             self.user_path_prefix,
-            self.manifest['id']
+            dirname
         )
 
 class Component(object):
@@ -86,7 +100,7 @@ class Component(object):
 
     __manifest__ = 'manifest.xml'
 
-    def __init__(self, path=None, user_path_prefix=''):
+    def __init__(self, path=None, user_path_prefix='', use_id_in_path=False):
 
         if path:
             self.__manifest__ = path
@@ -96,7 +110,7 @@ class Component(object):
             self.__manifest__ = os.path.join(base_path, self.__manifest__)
 
         # Create context and load manifest file...
-        self.context = Context(self.__manifest__, user_path_prefix)
+        self.context = Context(self.__manifest__, user_path_prefix, use_id_in_path)
 
         try:
             os.chdir(self.context.working_directory)
