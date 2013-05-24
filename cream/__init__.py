@@ -35,15 +35,16 @@ class Module(Component, unique.UniqueApplication):
 
     """
 
-    def __init__(self, module_id, *args, **kwargs):
+    def __init__(self, module_id, module_name='', *args, **kwargs):
 
         manifest_path = ''
 
         for directory in CREAM_DATA_DIRS:
-            path = os.path.join(directory, module_id, 'manifest.xml')
-            if os.path.exists(path):
-                manifest_path = path
-                break
+            for sub_dir in (module_id, module_name):
+                path = os.path.join(directory, sub_dir, 'manifest.xml')
+                if os.path.exists(path):
+                    manifest_path = path
+                    break
 
         Component.__init__(self, manifest_path, *args, **kwargs)
         unique.UniqueApplication.__init__(self, module_id)
