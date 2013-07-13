@@ -19,9 +19,11 @@ import os
 
 try:
     XDG_DATA_DIRS = os.environ['XDG_DATA_DIRS'].split(':')
-    XDG_DATA_HOME = os.environ['XDG_DATA_HOME'].split(':')
 except KeyError:
     XDG_DATA_DIRS = ['/usr/share']
+try:
+    XDG_DATA_HOME = os.environ['XDG_DATA_HOME'].split(':')
+except KeyError:
     XDG_DATA_HOME = [os.path.expanduser('~/.local/share')]
 
 CREAM_DATA_DIR = XDG_DATA_DIRS[0]
